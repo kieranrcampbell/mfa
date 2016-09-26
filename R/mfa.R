@@ -83,7 +83,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 pc_initialise = 1, collapse = FALSE, seed = 123L,
                 eta_tilde = mean(y), alpha = 2, beta = 1,
                 theta_tilde = 0, tau_eta = 1e-2, tau_theta = 1e-2,
-                alpha_chi = 1e-2, beta_chi = 1e-2, w_alpha = 1) {
+                alpha_chi = 1e-2, beta_chi = 1e-2, w_alpha = 1/2) {
   
   # set.seed(seed)
   N <- nrow(y)
