@@ -2,4 +2,4 @@
 
 export(mfa)
 importFrom(Rcpp,evalCpp)
-useDynLib(WMUtils)
+useDynLib(mfa)

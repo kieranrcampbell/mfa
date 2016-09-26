@@ -29,7 +29,7 @@ map_branch <- function(g) {
 
 
 posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha, beta,
-                      theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_k, beta_k) {
+                      theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_chi, beta_chi) {
   G <- ncol(y)
   N <- nrow(y)
   b <- ncol(k)
@@ -48,7 +48,7 @@ posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha
     sum(dnorm(eta, eta_tilde, 1 / sqrt(tau_eta), log = TRUE)) +
     sum(dgamma(tau, alpha, beta, log = TRUE)) +
     sum(dnorm(pst, 0, 1 / r, log = TRUE)) +
-    sum(dgamma(chi, alpha_k, beta_k, log = TRUE)) 
+    sum(dgamma(chi, alpha_chi, beta_chi, log = TRUE)) 
   
   k_prior <- sum( apply(k, 2, function(k_b) sum(dnorm(k_b, theta, 1 / sqrt(chi), log = TRUE))) )
   c_prior <- sum( sapply(seq_len(b), function(branch) sum(dnorm(c[,branch], eta[branch], 1 / sqrt(tau_c), log = TRUE)))) 
@@ -69,30 +69,40 @@ to_ggmcmc <- function(g) {
 
 #' Fit a MFA object
 #' 
+#' @param y A cell-by-gene single-cell expression matrix
+#' @param iter Number of MCMC iterations
+#' @param thin MCMC samples to thin
+#' @param burn Number of MCMC samples to throw away
+#' @param b Number of branches to model
+#' @param pc_initialise Which principal component to initialise pseudotimes to
+#' @param collapse Collapsed Gibbs sampling of branch assignments
+#' @param seed Random seed to set
+#' @param eta_tilde, Hyperparameter
+#' @param alpha Hyperparameter
+#' @param beta Hyperparameter
+#' @param theta_tilde Hyperparameter
+#' @param tau_eta Tau Hyperparameter
+#' @param tau_theta Hyperparameter
+#' @param alpha_chi Hyperparameter
+#' @param beta_chi Hyperparameter
+#' 
 #' @export
 #' @return Something horrific
 #' 
 #' @importFrom Rcpp evalCpp
-#' @useDynLib WMUtils
+#' @useDynLib mfa
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 pc_initialise = 1, collapse = FALSE, seed = 123L,
-                eta_tilde = mean(y)) {
+                eta_tilde = mean(y), alpha = 2, beta = 1,
+                theta_tilde = 0, tau_eta = 1e-2, tau_theta = 1e-2,
+                alpha_chi = 1e-2, beta_chi = 1e-2) {
   
   # set.seed(seed)
   N <- nrow(y)
   G <- ncol(y)
   message(paste("Sampling for", N, "cells and", G, "genes"))
   
-  ## branching hierarchy
-  theta_tilde <- 0
-  # eta_tilde <- 5
-  tau_eta <- tau_theta <- 1e-2
-  alpha_k <- beta_k <- 1e-2
-  
-  
   ## precision parameters
-  alpha <- 2
-  beta <- 1
   tau <- rep(1, G)
   
   ## pseudotime parameters
@@ -112,7 +122,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   
   eta <- colMeans(c)
   
-  chi <- rep(1, G) # rgamma(G, alpha_k, beta_k)
+  chi <- rep(1, G) # rgamma(G, alpha_chi, beta_chi)
   tau_c <- 1 # 0.1 # rgamma(G, alpha_c, beta_c)
   
   
@@ -140,46 +150,38 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   
   for(it in 1:iter) {
     
-
-    
+    # Factor loading matrix sampling
     k_new <- sapply(seq_len(b), function(branch) sample_k(y, pst, c[, branch], tau, theta, chi, gamma == branch))
-    
     c_new <- sapply(seq_len(b), function(branch) sample_c(y, pst, k_new[, branch], tau, eta[branch], tau_c, gamma == branch, sum(gamma == branch)))
     
-    
-    # ## remove
-    # calculate_nuc(y, pst, k_new[,branch], tau, eta, tau_c, which())
-    # 
-    ####
-
-    ## update for pseudotimes
+    # Pseudotime sampling
     pst_new <- sample_pst(y, c_new, k_new, r, gamma, tau);
   
+    # Precision sampling
     tau_new <- sample_tau(y, c_new, k_new, gamma, pst_new, alpha, beta)
     
-    ## updates for theta (k)
+    # Theta sampling
     lambda_theta <- 2 * chi + tau_theta
     nu_theta <- tau_theta * theta_tilde + chi * rowSums(k_new)
     nu_theta <- nu_theta / lambda_theta
-    
     theta_new <- rnorm(G, nu_theta, 1 / sqrt(lambda_theta))
 
-    ## updates for eta (c)
+    # Eta sampling
     lambda_eta <- tau_eta + G * tau_c
     nu_eta <- tau_eta * eta_tilde + tau_c * colSums(c_new)
     nu_eta <- nu_eta / lambda_eta
-    
     eta_new <- rnorm(length(nu_eta), nu_eta, 1 / sqrt(lambda_eta))
     
-    ## update for tau_k
-    alpha_new <- alpha_k + 1
-    beta_new <- beta_k + 0.5 * rowSums( (k_new - theta_new)^2 )
+    # Chi sampling
+    alpha_new <- alpha_chi + 1
+    beta_new <- beta_chi + 0.5 * rowSums( (k_new - theta_new)^2 )
     chi_new <- rgamma(G, alpha_new, beta_new)
 
+    # Gamma sampling
     pi <-  calculate_pi(y, c_new, k_new, pst_new, tau_new, eta_new, tau_c, collapse)
     gamma <- r_bernoulli_mat(pi) + 1 # need +1 to convert from C++ to R
-    # print(table(gamma))
 
+    # Gibbs sampling - accept all parameters
     k <- k_new
     c <- c_new
     pst <- pst_new
@@ -187,34 +189,25 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     eta <- eta_new
     theta <- theta_new
     chi <- chi_new
-    # tau_c <- tau_c_new
-    
+
+    # Add some relevant variables to trace    
     if((it > burn) && (it %% thin == 0)) {
       sample_pos <- (it - burn) / thin
-      # k0_trace[sample_pos,] <- k0
-      # k1_trace[sample_pos,] <- k1
-      # c0_trace[sample_pos,] <- c0
-      # c1_trace[sample_pos,] <- c1
       tau_trace[sample_pos,] <- tau
       gamma_trace[sample_pos,] <- gamma
       pst_trace[sample_pos,] <- pst
       theta_trace[sample_pos,] <- theta
-      
       eta_trace[sample_pos,] <- eta
-      # tau_k_trace[sample_pos,] <- tau_k
-      # tau_c_trace[sample_pos,] <- tau_c
-      
+
       post <- posterior(y, c, k, pst,
                         tau, gamma, theta, eta, chi, tau_c, r,
                         alpha, beta, theta_tilde, 
                         eta_tilde, tau_theta, tau_eta,
-                        alpha_k, beta_k)
+                        alpha_chi, beta_chi)
       lp_trace[sample_pos,] <- post 
     }
   }
-  return(list(#k0_trace = k0_trace, k1_trace = k1_trace,
-              #c0_trace = c0_trace, c1_trace = c1_trace,
-              tau_trace = tau_trace, gamma_trace = gamma_trace,
+  return(list(tau_trace = tau_trace, gamma_trace = gamma_trace,
               pst_trace = pst_trace, theta_trace = theta_trace,
               eta_trace = eta_trace, lp_trace = lp_trace))
 }

@@ -5,7 +5,42 @@
 \title{Fit a MFA object}
 \usage{
 mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
-  collapse = FALSE, seed = 123L, eta_tilde = 5)
+  collapse = FALSE, seed = 123L, eta_tilde = mean(y), alpha = 2,
+  beta = 1, theta_tilde = 0, tau_eta = 0.01, tau_theta = 0.01,
+  alpha_chi = 0.01, beta_chi = 0.01)
+}
+\arguments{
+\item{y}{A cell-by-gene single-cell expression matrix}
+
+\item{iter}{Number of MCMC iterations}
+
+\item{thin}{MCMC samples to thin}
+
+\item{burn}{Number of MCMC samples to throw away}
+
+\item{b}{Number of branches to model}
+
+\item{pc_initialise}{Which principal component to initialise pseudotimes to}
+
+\item{collapse}{Collapsed Gibbs sampling of branch assignments}
+
+\item{seed}{Random seed to set}
+
+\item{eta_tilde, }{Hyperparameter}
+
+\item{alpha}{Hyperparameter}
+
+\item{beta}{Hyperparameter}
+
+\item{theta_tilde}{Hyperparameter}
+
+\item{tau_eta}{Tau Hyperparameter}
+
+\item{tau_theta}{Hyperparameter}
+
+\item{alpha_chi}{Hyperparameter}
+
+\item{beta_chi}{Hyperparameter}
 }
 \value{
 Something horrific
