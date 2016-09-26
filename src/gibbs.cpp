@@ -272,7 +272,7 @@ NumericVector sample_tau(NumericMatrix y, NumericMatrix c, NumericMatrix k,
 
 // [[Rcpp::export]]
 NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, NumericVector pst, NumericVector tau, 
-                           NumericVector eta, double tau_c, bool collapse) {
+                           NumericVector eta, double tau_c, bool collapse, NumericVector log_w) {
   int N = y.nrow();
   int G = y.ncol();
   int b = c.ncol(); // number of branches
@@ -283,19 +283,21 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
   if(collapse == 0) {
     for(int i = 0; i < N; i++) {
       NumericVector comp_ll(b, 0.0); // log-likelihood vector for each branch, default to 0.0
-      
-      for(int g = 0; g < G; g++) {
-        double y_ = y(i,g);
-        double sd = 1 / sqrt(tau[g]);
+
+      for(int branch = 0; branch < b; branch++) {
+
+        for(int g = 0; g < G; g++) {
+          double y_ = y(i,g);
+          double sd = 1 / sqrt(tau[g]);
         
-        for(int branch = 0; branch < b; branch++) {
           double comp_mean = c(g, branch) + k(g, branch) * pst[i];
           // std::cout << comp_mean << " ";
-          comp_ll(branch) += log_d_norm(y_, comp_mean, sd);
+          comp_ll[branch] += log_d_norm(y_, comp_mean, sd);
         }
         // std::cout << std::endl;
-        
+        comp_ll[branch] += log_w[branch];
       }
+
       for(int branch = 0; branch < b; branch++) {
         // std::cout << comp_ll[branch] << " ";
         pi(i, branch) = exp(comp_ll[branch] - log_sum_exp(comp_ll));
@@ -306,17 +308,18 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
     for(int i = 0; i < N; i++) {
       NumericVector comp_ll(b, 0.0); // log-likelihood vector for each branch, default to 0.0
       
-      for(int g = 0; g < G; g++) {
-        double y_ = y(i,g);
-        double sd = sqrt(1 / tau_c + 1 / tau[g]);
+      for(int branch = 0; branch < b; branch++) {
+        for(int g = 0; g < G; g++) {
+          double y_ = y(i,g);
+          double sd = 1/sqrt( (1/tau_c) + (1/tau[g]) );
         
-        for(int branch = 0; branch < b; branch++) {
           double comp_mean = eta[branch] + k(g, branch) * pst[i];
-          comp_ll(branch) += log_d_norm(y_, comp_mean, sd);
+          comp_ll[branch] += log_d_norm(y_, comp_mean, sd);
         }
+        comp_ll[branch] += log_w[branch]; 
       }
       for(int branch = 0; branch < b; branch++)
-        pi(i, branch) = exp(comp_ll[branch] - log_sum_exp(comp_ll));
+        pi(i, branch) = exp( comp_ll[branch] - log_sum_exp(comp_ll));
     }
   }
   return pi;

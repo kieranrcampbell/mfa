@@ -72,17 +72,18 @@ to_ggmcmc <- function(g) {
 #' @param tau_theta Hyperparameter
 #' @param alpha_chi Hyperparameter
 #' @param beta_chi Hyperparameter
+#' @param w_alpha Hyperparameter
 #' 
 #' @export
 #' @return Something horrific
 #' 
-#' @importFrom Rcpp evalCpp
+#' @importFrom Rcpp evalCpp MCMCpack
 #' @useDynLib mfa
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 pc_initialise = 1, collapse = FALSE, seed = 123L,
                 eta_tilde = mean(y), alpha = 2, beta = 1,
                 theta_tilde = 0, tau_eta = 1e-2, tau_theta = 1e-2,
-                alpha_chi = 1e-2, beta_chi = 1e-2) {
+                alpha_chi = 1e-2, beta_chi = 1e-2, w_alpha = 1) {
   
   # set.seed(seed)
   N <- nrow(y)
@@ -114,7 +115,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   
   
   ## assignments for each cell
-  gamma <- sample(seq_len(b), N, replace = TRUE) # as.numeric( pst < mean(pst)  ) #
+  w <- rep(1/b, b) # prior probability of each branch
+  gamma <- sample(seq_len(b), N, replace = TRUE, prob=w) # as.numeric( pst < mean(pst)  ) 
 
   nsamples <- floor((iter - burn) / thin)
   G_dim <- c(nsamples, G)
@@ -122,12 +124,15 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   
   eta_trace <- mcmcify(matrix(NA, nrow = nsamples, ncol = b), "eta")
   theta_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "theta")
+  lambda_theta_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "lambda_theta")
+  
   chi_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "chi")
   
   k_trace <- array(dim = c(nsamples, b, G))
   c_trace <- array(dim = c(nsamples, b, G))
   
   tau_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "tau")
+  
   gamma_trace <- mcmcify(matrix(NA, nrow = N_dim[1], ncol = N_dim[2]), "gamma")
   pst_trace <- mcmcify(matrix(NA, nrow = N_dim[1], ncol = N_dim[2]), "pst")
   lp_trace <- matrix(NA, nrow = nsamples, ncol = 1)
@@ -143,7 +148,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     
     # Pseudotime sampling
     pst_new <- sample_pst(y, c_new, k_new, r, gamma, tau);
-  
+    
     # Precision sampling
     tau_new <- sample_tau(y, c_new, k_new, gamma, pst_new, alpha, beta)
     
@@ -165,9 +170,13 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     chi_new <- rgamma(G, alpha_new, beta_new)
 
     # Gamma sampling
-    pi <-  calculate_pi(y, c_new, k_new, pst_new, tau_new, eta_new, tau_c, collapse)
+    pi <-  calculate_pi(y, c_new, k_new, pst_new, tau_new, eta_new, tau_c, collapse, log(w))
     gamma <- r_bernoulli_mat(pi) + 1 # need +1 to convert from C++ to R
-
+    
+    # update prior probabilities of each branch
+    n_gamma <- tabulate(gamma)
+    w <- rdirichlet(1, n_gamma + w_alpha) 
+    
     # Gibbs sampling - accept all parameters
     k <- k_new
     c <- c_new
@@ -184,6 +193,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
       gamma_trace[sample_pos,] <- gamma
       pst_trace[sample_pos,] <- pst
       theta_trace[sample_pos,] <- theta
+      chi_trace[sample_pos,] <- chi
+      lambda_theta_trace[sample_pos,] <- lambda_theta
       eta_trace[sample_pos,] <- eta
 
       post <- posterior(y, c, k, pst,
@@ -195,7 +206,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     }
   }
   traces <- list(tau_trace = tau_trace, gamma_trace = gamma_trace,
-                      pst_trace = pst_trace, theta_trace = theta_trace,
+                      pst_trace = pst_trace, theta_trace = theta_trace, lambda_theta_trace = lambda_theta_trace, chi_trace = chi_trace,
                       eta_trace = eta_trace, lp_trace = lp_trace)
   mfa_res <- structure(list(traces = traces, iter = iter, thin = thin, burn = burn,
                             b = b, collapse = collapse, N = N, G = G), class = "mfa")
