@@ -9,7 +9,9 @@ Depends:
     R (>= 3.3.0)
 Imports:
     ggplot2,
-    Rcpp
+    Rcpp,
+    dplyr,
+    ggmcmc
 LinkingTo: Rcpp
 License: GPL >= 2
 Encoding: UTF-8

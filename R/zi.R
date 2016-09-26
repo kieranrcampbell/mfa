@@ -1,17 +1,15 @@
 ## Gibbs sampling for mixture of factor analyzers
 
-library(matrixStats)
-
-rbernoulli <- function(pi) sapply(pi, function(p) sample(c(0,1), 1, 
+zi_rbernoulli <- function(pi) sapply(pi, function(p) sample(c(0,1), 1, 
                                                          prob = c(1-p,p)))
 
 #' Turn a matrix's columns into informative names
-mcmcify <- function(m, name) {
+zi_mcmcify <- function(m, name) {
   colnames(m) <- paste0(name, "[", seq_len(ncol(m)),"]")
   return(m)
 }
 
-posterior <- function(y, c0, c1, k0, k1, pst, tau, gamma, theta, eta, tau_k, tau_c, r, alpha, beta,
+zi_posterior <- function(y, c0, c1, k0, k1, pst, tau, gamma, theta, eta, tau_k, tau_c, r, alpha, beta,
                       theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_k, beta_k) {
   G <- ncol(y)
   N <- nrow(y)
@@ -41,7 +39,7 @@ posterior <- function(y, c0, c1, k0, k1, pst, tau, gamma, theta, eta, tau_k, tau
 }
 
 
-to_ggmcmc <- function(g) {
+zi_to_ggmcmc <- function(g) {
   g['x_mean_trace'] <- NULL
   x <- do.call(cbind, g)
   mcmcl <- mcmc.list(list(mcmc(x)))
@@ -221,7 +219,7 @@ mfa_zi <- function(y, iter = 2000, thin = 1, burn = iter / 2, lambda = 1,
               x_mean_trace = x_mean_trace / nsamples))
 }
 
-log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
+zi_log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
 
 
 empirical_lambda <- function(Y) {

@@ -13,19 +13,6 @@ mcmcify <- function(m, name) {
 
 log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
 
-map_branch <- function(g) {
-  gamma <- g$gamma_trace
-  df <- apply(gamma, 2, function(gam) {
-    tab <- table(gam)
-    max <- which.max(tab)
-    max_n <- as.integer(names(max))
-    prop <- mean(gam == max_n)
-    return(c(max_n, prop))
-  })
-  df <- t(df) %>% as_data_frame()
-  names(df) <- c("max", "prop")
-  return(df)
-}
 
 
 posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha, beta,
@@ -207,7 +194,77 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
       lp_trace[sample_pos,] <- post 
     }
   }
-  return(list(tau_trace = tau_trace, gamma_trace = gamma_trace,
-              pst_trace = pst_trace, theta_trace = theta_trace,
-              eta_trace = eta_trace, lp_trace = lp_trace))
+  traces <- list(tau_trace = tau_trace, gamma_trace = gamma_trace,
+                      pst_trace = pst_trace, theta_trace = theta_trace,
+                      eta_trace = eta_trace, lp_trace = lp_trace)
+  mfa_res <- structure(list(traces = traces, iter = iter, thin = thin, burn = burn,
+                            b = b, collapse = collapse, N = N, G = G), class = "mfa")
 }
+
+#' Print an mfa fit
+#' @export
+print.mfa <- function(x) {
+  msg <- paste("MFA fit with\n",
+               x$N, "cells and", x$G, "genes\n",
+               "(", x$iter, "iterations )")
+  cat(msg)
+}
+
+#' Plot MFA trace
+#' @export
+#' 
+plot_mfa_trace <- function(m) {
+  stopifnot(is(m, "mfa"))
+  lp <- m$traces$lp_trace[,1]
+  qplot(seq_along(lp), lp, geom = 'line') + stat_smooth(se = F) +
+    xlab("Iteration") + ylab("log-probability")
+}
+
+
+#' Plot MFA autocorrelation
+#' @export
+#' @importFrom dplyr data_frame
+plot_mfa_autocorr <- function(x) {
+  stopifnot(is(m, "mfa"))
+  lp <- m$traces$lp_trace[,1]
+  lp_df <- ggmcmc::ggs(coda::mcmc.list(list(coda::mcmc(data.frame(lp))))) # I long for a simple life
+  
+  ggmcmc::ggs_autocorrelation(lp_df)
+}
+
+
+map_branch <- function(g) {
+  gamma <- g$gamma_trace
+  df <- apply(gamma, 2, function(gam) {
+    tab <- table(gam)
+    max <- which.max(tab)
+    max_n <- as.integer(names(max))
+    prop <- mean(gam == max_n)
+    return(c(max_n, prop))
+  })
+  df <- t(df) %>% as_data_frame()
+  names(df) <- c("max", "prop")
+  return(df)
+}
+
+
+#' Summarise mfa fit
+#' @export
+#' 
+#' @importFrom MCMCglmm posterior.mode
+#' @importFrom coda mcmc
+summary.mfa <- function(x, ...) {
+  df <- map_branch(x$traces)
+  
+  tmap <- posterior.mode(mcmc(x$traces$pst_trace))
+  df$pseudotime <- tmap
+  df <- dplyr::rename(df, branch = max, branch_certainty = prop)
+  df <- dplyr::select(df, pseudotime, branch, branch_certainty)
+  return( df )
+}
+
+
+
+
+
+
