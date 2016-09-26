@@ -193,9 +193,9 @@ NumericMatrix pst_update_par(NumericMatrix y, NumericMatrix c, NumericMatrix k,
     k_ = k(_, gamma[i] - 1); // C++ as 0 indexing
     c_ = c(_, gamma[i] - 1);
 
-    lam_ti = pow(r, 2) + sum(tau * pow(k, 2));
+    lam_ti = pow(r, 2) + sum(tau * pow(k_, 2));
     for(int g = 0; g < G; g++) 
-      nu_ti += tau[g] * k[g] * (y(i,g) - c[g]);
+      nu_ti += tau[g] * k_[g] * (y(i,g) - c_[g]);
     
     nu_ti /= lam_ti;
     pst_parameters(i, 0) = nu_ti;
