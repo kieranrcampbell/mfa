@@ -263,14 +263,21 @@ map_branch <- function(g) {
 #' @export
 #' 
 #' @importFrom MCMCglmm posterior.mode
-#' @importFrom coda mcmc
+#' @importFrom coda mcmc, HPDinterval
 summary.mfa <- function(x, ...) {
+  # map branching
   df <- map_branch(x$traces)
   
+  # pseudotimes
   tmap <- posterior.mode(mcmc(x$traces$pst_trace))
+  hpd_credint <- HPDinterval(mcmc(x$traces$pst_trace))
+  
   df$pseudotime <- tmap
+  df$pseudotime_lower <- hpd_credint[,1]
+  df$pseudotime_upper <- hpd_credint[,2]
+  
   df <- dplyr::rename(df, branch = max, branch_certainty = prop)
-  df <- dplyr::select(df, pseudotime, branch, branch_certainty)
+  df <- dplyr::select(df, pseudotime, branch, branch_certainty, pseudotime_lower, pseudotime_upper)
   return( df )
 }
 
