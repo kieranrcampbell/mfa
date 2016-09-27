@@ -175,7 +175,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     
     # update prior probabilities of each branch
     n_gamma <- tabulate(gamma)
-    w <- rdirichlet(1, n_gamma + w_alpha) 
+    w <- MCMCpack::rdirichlet(1, n_gamma + w_alpha) 
     
     # Gibbs sampling - accept all parameters
     k <- k_new
