@@ -77,7 +77,7 @@ to_ggmcmc <- function(g) {
 #' @export
 #' @return Something horrific
 #' 
-#' @importFrom Rcpp evalCpp MCMCpack
+#' @importFrom Rcpp evalCpp
 #' @useDynLib mfa
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 pc_initialise = 1, collapse = FALSE, seed = 123L,
