@@ -4,7 +4,7 @@
 \alias{plot_mfa_autocorr}
 \title{Plot MFA autocorrelation}
 \usage{
-plot_mfa_autocorr(x)
+plot_mfa_autocorr(m)
 }
 \description{
 Plot MFA autocorrelation

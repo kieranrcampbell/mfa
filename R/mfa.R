@@ -90,6 +90,12 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   G <- ncol(y)
   message(paste("Sampling for", N, "cells and", G, "genes"))
   
+  feature_names <- colnames(y)
+  cell_names <- rownames(y)
+  
+  if(is.null(feature_names)) feature_names <- paste0("feature_", seq_len(G))
+  if(is.null(cell_names)) cell_names <- paste0("cell_", seq_len(N))
+  
   ## precision parameters
   tau <- rep(1, G)
   
@@ -209,7 +215,9 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                       pst_trace = pst_trace, theta_trace = theta_trace, lambda_theta_trace = lambda_theta_trace, chi_trace = chi_trace,
                       eta_trace = eta_trace, lp_trace = lp_trace)
   mfa_res <- structure(list(traces = traces, iter = iter, thin = thin, burn = burn,
-                            b = b, collapse = collapse, N = N, G = G), class = "mfa")
+                            b = b, collapse = collapse, N = N, G = G,
+                            feature_names = feature_names, cell_names = cell_names), 
+                       class = "mfa")
 }
 
 #' Print an mfa fit
@@ -235,7 +243,7 @@ plot_mfa_trace <- function(m) {
 #' Plot MFA autocorrelation
 #' @export
 #' @importFrom dplyr data_frame
-plot_mfa_autocorr <- function(x) {
+plot_mfa_autocorr <- function(m) {
   stopifnot(is(m, "mfa"))
   lp <- m$traces$lp_trace[,1]
   lp_df <- ggmcmc::ggs(coda::mcmc.list(list(coda::mcmc(data.frame(lp))))) # I long for a simple life
@@ -263,14 +271,13 @@ map_branch <- function(g) {
 #' @export
 #' 
 #' @importFrom MCMCglmm posterior.mode
-#' @importFrom coda mcmc, HPDinterval
 summary.mfa <- function(x, ...) {
   # map branching
   df <- map_branch(x$traces)
   
   # pseudotimes
-  tmap <- posterior.mode(mcmc(x$traces$pst_trace))
-  hpd_credint <- HPDinterval(mcmc(x$traces$pst_trace))
+  tmap <- posterior.mode(coda::mcmc(x$traces$pst_trace))
+  hpd_credint <- coda::HPDinterval(coda::mcmc(x$traces$pst_trace))
   
   df$pseudotime <- tmap
   df$pseudotime_lower <- hpd_credint[,1]
@@ -281,6 +288,33 @@ summary.mfa <- function(x, ...) {
   return( df )
 }
 
+#' Calculate posterior precision parameters
+#' 
+#' @export
+#' @importFrom MCMCglmm posterior.mode
+calculate_chi <- function(m) {
+  chi_map <- posterior.mode(mcmc(m$traces$chi_trace))
+  return(
+    dplyr::data_frame(feature = m$feature_names, chi_map)
+  )
+}
+
+#' Plot posterior precision parameters
+#' 
+#' @export
+#' @import ggplot2
+plot_chi <- function(m, nfeatures = m$G) {
+  chi <- calculate_chi(m)
+  chi <- dplyr::mutate(chi, chi_map_inverse = 1 / chi_map)
+  chi <- dplyr::arrange(chi, chi_map_inverse)
+  chi <- chi[seq_len(nfeatures), ]
+  
+  chi$feature <- factor(chi$feature, levels = chi$feature)
+  
+  ggplot(chi, aes(x = feature, y = chi_map_inverse)) +
+    geom_bar(stat = 'identity') + coord_flip() +
+    ylab(expression(paste("[MAP ", chi[g] ,"]" ^ "-1"))) 
+}
 
 
 

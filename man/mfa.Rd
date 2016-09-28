@@ -5,9 +5,9 @@
 \title{Fit a MFA object}
 \usage{
 mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
-  collapse = FALSE, seed = 123L, eta_tilde = mean(y), alpha = 2,
-  beta = 1, theta_tilde = 0, tau_eta = 0.01, tau_theta = 0.01,
-  alpha_chi = 0.01, beta_chi = 0.01, w_alpha = 1/2)
+  collapse = FALSE, seed = 123L, eta_tilde = mean(y), alpha = 1,
+  beta = 1, theta_tilde = 0, tau_eta = 1, tau_theta = 1,
+  alpha_chi = 1, beta_chi = 1, w_alpha = 1/b)
 }
 \arguments{
 \item{y}{A cell-by-gene single-cell expression matrix}
