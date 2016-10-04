@@ -6,6 +6,9 @@
 \usage{
 calculate_chi(m)
 }
+\arguments{
+\item{m}{A fit returned from \code{mfa}}
+}
 \description{
 Calculate posterior precision parameters
 }

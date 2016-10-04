@@ -6,6 +6,11 @@
 \usage{
 mcmcify(m, name)
 }
+\arguments{
+\item{m}{A fit returned from \code{mfa}}
+
+\item{name}{The name of the parameter}
+}
 \description{
 Turn a matrix's columns into informative names
 }

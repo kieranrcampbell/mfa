@@ -4,7 +4,12 @@
 \alias{summary.mfa}
 \title{Summarise mfa fit}
 \usage{
-\method{summary}{mfa}(x, ...)
+\method{summary}{mfa}(object, ...)
+}
+\arguments{
+\item{object}{An MFA fit returned by a call to \code{mfa}}
+
+\item{...}{Additional arguments}
 }
 \description{
 Summarise mfa fit

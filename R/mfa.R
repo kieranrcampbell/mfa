@@ -5,6 +5,9 @@ rbernoulli <- function(pi) sapply(pi, function(p) sample(c(0,1), 1,
                                                          prob = c(1-p,p)))
 
 #' Turn a matrix's columns into informative names
+#' 
+#' @param m A fit returned from \code{mfa}
+#' @param name The name of the parameter
 mcmcify <- function(m, name) {
   colnames(m) <- paste0(name, "[", seq_len(ncol(m)),"]")
   return(m)
@@ -14,7 +17,9 @@ mcmcify <- function(m, name) {
 log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
 
 
-
+#' Calculate the log-posterior during inference
+#' 
+#' @importFrom stats dgamma dnorm
 posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha, beta,
                       theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_chi, beta_chi) {
   G <- ncol(y)
@@ -23,7 +28,7 @@ posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha
   
   branch_likelihoods <- sapply(seq_len(b), function(branch) {
     ll_branch <- sapply(seq_len(N), function(i) {
-        sum(dnorm(y[i,], c[,branch] + k[branch] * pst[i], 1 / sqrt(tau), log = TRUE))
+        sum(dnorm(y[i,], c[,branch] + k[,branch] * pst[i], 1 / sqrt(tau), log = TRUE))
     })
     sum(ll_branch[gamma == branch])
   })
@@ -46,15 +51,21 @@ posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha
 }
 
 
-
+#' Turn a trace list to a \code{ggmcmc} object
+#' 
+#' @param g A list of trace matrices
+#' 
 to_ggmcmc <- function(g) {
   x <- do.call(cbind, g)
-  mcmcl <- mcmc.list(list(mcmc(x)))
-  return(ggs(mcmcl))
+  mcmcl <- coda::mcmc.list(list(coda::mcmc(x)))
+  return(ggmcmc::ggs(mcmcl))
 }
 
 
 #' Fit a MFA object
+#' 
+#' Perform Gibbs sampling inference for a hierarchical Bayesian mixture of factor analysers
+#' to identify bifurcations in single-cell expression data.
 #' 
 #' @param y A cell-by-gene single-cell expression matrix
 #' @param iter Number of MCMC iterations
@@ -64,20 +75,60 @@ to_ggmcmc <- function(g) {
 #' @param pc_initialise Which principal component to initialise pseudotimes to
 #' @param collapse Collapsed Gibbs sampling of branch assignments
 #' @param seed Random seed to set
-#' @param eta_tilde, Hyperparameter
+#' @param eta_tilde Hyperparameter
 #' @param alpha Hyperparameter
 #' @param beta Hyperparameter
 #' @param theta_tilde Hyperparameter
-#' @param tau_eta Tau Hyperparameter
+#' @param tau_eta Hyperparameter
 #' @param tau_theta Hyperparameter
 #' @param alpha_chi Hyperparameter
 #' @param beta_chi Hyperparameter
 #' @param w_alpha Hyperparameter
 #' 
+#' @details 
+#' The column names of Y are used as feature (gene/transcript) names while the row names
+#' are used as cell names. If either of these is undefined then the corresponding names
+#' are set to cell_x or feature_y.
+#' 
+#' It is recommended the form of Y is analogous to log-expression to mitigate the impact of 
+#' outliers.
+#' 
+#' In the absence of prior information, three valid local maxima in the posterior likelihood
+#' exist (see manuscript). Setting the initial values to a principal component typically
+#' fixes sampling to one of them, analogous to specifying a root cell in similar methods.
+#' 
+#' The hyper-parameter \code{eta_tilde} represents the expected expression in the absence of
+#' any actual expression measurements. While a Bayesian purist might reason this based on 
+#' knowledge of the measurement technology, simply taking the mean of the input matrix in
+#' an Empirical Bayes style seems reasonable.
+#' 
+#' The degree of shrinkage of the factor loading matrices to a common value is given by the
+#' gamma prior on \code{chi}. The mean of this is \code{alpha_chi / beta_chi} while the variance 
+#' \code{alpha_chi / beta_chi^2}. Therefore, to obtain higher levels of shrinkage increase
+#' \code{alpha_chi} with respect to \code{beta_chi}.
+#' 
+#' The collapsed Gibbs sampling option given by \code{collapse} involves marginalising out
+#' \code{c} (the factor loading intercepts) when updating the branch assignment parameters
+#' \code{gamma} which tends to soften the branch assignments.
+#' 
 #' @export
-#' @return Something horrific
+#' @return 
+#' An S3 structure with the following entries:
+#' \itemize{
+#' \item \code{traces} A list of iteration-by-dim trace matrices for several important variables
+#' \item \code{iter} Number of iterations
+#' \item \code{thin} Thinning applied
+#' \item \code{burn} Burn period at the start of MCMC
+#' \item \code{b} Number of branches modelled
+#' \item \code{collapse} Whether collapsed Gibbs sampling was used for branch assignment parameters
+#' \item \code{N} Number of cells
+#' \item \code{G} Number of features (genes/transcripts)
+#' \item \code{feature_names} Names of features
+#' \item \code{cell_names} Names of cells
+#' }
 #' 
 #' @importFrom Rcpp evalCpp
+#' @importFrom stats prcomp nls coef sd lm rnorm rgamma
 #' @useDynLib mfa
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 pc_initialise = 1, collapse = FALSE, seed = 123L,
@@ -221,8 +272,12 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
 }
 
 #' Print an mfa fit
+#' 
+#' @param x An MFA fit returned by \code{mfa}
+#' @param ... Additional arguments
+#' 
 #' @export
-print.mfa <- function(x) {
+print.mfa <- function(x, ...) {
   msg <- paste("MFA fit with\n",
                x$N, "cells and", x$G, "genes\n",
                "(", x$iter, "iterations )")
@@ -230,8 +285,12 @@ print.mfa <- function(x) {
 }
 
 #' Plot MFA trace
+#' 
+#' @param m A fit returned from \code{mfa}
+#' 
 #' @export
 #' 
+#' @importFrom methods is
 plot_mfa_trace <- function(m) {
   stopifnot(is(m, "mfa"))
   lp <- m$traces$lp_trace[,1]
@@ -241,8 +300,12 @@ plot_mfa_trace <- function(m) {
 
 
 #' Plot MFA autocorrelation
+#' 
+#' @param m A fit returned from \code{mfa}
+#' 
 #' @export
 #' @importFrom dplyr data_frame
+#' @importFrom methods is
 plot_mfa_autocorr <- function(m) {
   stopifnot(is(m, "mfa"))
   lp <- m$traces$lp_trace[,1]
@@ -261,23 +324,31 @@ map_branch <- function(g) {
     prop <- mean(gam == max_n)
     return(c(max_n, prop))
   })
-  df <- t(df) %>% as_data_frame()
+  df <- dplyr::as_data_frame(t(df))
   names(df) <- c("max", "prop")
+  df$max <- factor(df$max)
   return(df)
 }
 
 
 #' Summarise mfa fit
+#' 
+#' @param object An MFA fit returned by a call to \code{mfa}
+#' @param ... Additional arguments
 #' @export
 #' 
 #' @importFrom MCMCglmm posterior.mode
-summary.mfa <- function(x, ...) {
+summary.mfa <- function(object, ...) {
+  
+  ## Please someone fix R:
+  branch <- branch_certainty <- pseudotime_lower <- pseudotime_upper <- NULL
+  
   # map branching
-  df <- map_branch(x$traces)
+  df <- map_branch(object$traces)
   
   # pseudotimes
-  tmap <- posterior.mode(coda::mcmc(x$traces$pst_trace))
-  hpd_credint <- coda::HPDinterval(coda::mcmc(x$traces$pst_trace))
+  tmap <- posterior.mode(coda::mcmc(object$traces$pst_trace))
+  hpd_credint <- coda::HPDinterval(coda::mcmc(object$traces$pst_trace))
   
   df$pseudotime <- tmap
   df$pseudotime_lower <- hpd_credint[,1]
@@ -290,16 +361,21 @@ summary.mfa <- function(x, ...) {
 
 #' Calculate posterior precision parameters
 #' 
+#' @param m A fit returned from \code{mfa}
+#' 
 #' @export
 #' @importFrom MCMCglmm posterior.mode
 calculate_chi <- function(m) {
-  chi_map <- posterior.mode(mcmc(m$traces$chi_trace))
+  chi_map <- posterior.mode(coda::mcmc(m$traces$chi_trace))
   return(
     dplyr::data_frame(feature = m$feature_names, chi_map)
   )
 }
 
 #' Plot posterior precision parameters
+#' 
+#' @param m A fit returned from \code{mfa}
+#' @param nfeatures Top number of 
 #' 
 #' @export
 #' @import ggplot2
@@ -311,7 +387,7 @@ plot_chi <- function(m, nfeatures = m$G) {
   
   chi$feature <- factor(chi$feature, levels = chi$feature)
   
-  ggplot(chi, aes(x = feature, y = chi_map_inverse)) +
+  ggplot(chi, aes_string(x = "feature", y = "chi_map_inverse")) +
     geom_bar(stat = 'identity') + coord_flip() +
     ylab(expression(paste("[MAP ", chi[g] ,"]" ^ "-1"))) 
 }

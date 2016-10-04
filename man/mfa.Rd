@@ -26,7 +26,7 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
 
 \item{seed}{Random seed to set}
 
-\item{eta_tilde, }{Hyperparameter}
+\item{eta_tilde}{Hyperparameter}
 
 \item{alpha}{Hyperparameter}
 
@@ -34,7 +34,7 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
 
 \item{theta_tilde}{Hyperparameter}
 
-\item{tau_eta}{Tau Hyperparameter}
+\item{tau_eta}{Hyperparameter}
 
 \item{tau_theta}{Hyperparameter}
 
@@ -45,9 +45,48 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
 \item{w_alpha}{Hyperparameter}
 }
 \value{
-Something horrific
+An S3 structure with the following entries:
+\itemize{
+\item \code{traces} A list of iteration-by-dim trace matrices for several important variables
+\item \code{iter} Number of iterations
+\item \code{thin} Thinning applied
+\item \code{burn} Burn period at the start of MCMC
+\item \code{b} Number of branches modelled
+\item \code{collapse} Whether collapsed Gibbs sampling was used for branch assignment parameters
+\item \code{N} Number of cells
+\item \code{G} Number of features (genes/transcripts)
+\item \code{feature_names} Names of features
+\item \code{cell_names} Names of cells
+}
 }
 \description{
-Fit a MFA object
+Perform Gibbs sampling inference for a hierarchical Bayesian mixture of factor analysers
+to identify bifurcations in single-cell expression data.
+}
+\details{
+The column names of Y are used as feature (gene/transcript) names while the row names
+are used as cell names. If either of these is undefined then the corresponding names
+are set to cell_x or feature_y.
+
+It is recommended the form of Y is analogous to log-expression to mitigate the impact of 
+outliers.
+
+In the absence of prior information, three valid local maxima in the posterior likelihood
+exist (see manuscript). Setting the initial values to a principal component typically
+fixes sampling to one of them, analogous to specifying a root cell in similar methods.
+
+The hyper-parameter \code{eta_tilde} represents the expected expression in the absence of
+any actual expression measurements. While a Bayesian purist might reason this based on 
+knowledge of the measurement technology, simply taking the mean of the input matrix in
+an Empirical Bayes style seems reasonable.
+
+The degree of shrinkage of the factor loading matrices to a common value is given by the
+gamma prior on \code{chi}. The mean of this is \code{alpha_chi / beta_chi} while the variance 
+\code{alpha_chi / beta_chi^2}. Therefore, to obtain higher levels of shrinkage increase
+\code{alpha_chi} with respect to \code{beta_chi}.
+
+The collapsed Gibbs sampling option given by \code{collapse} involves marginalising out
+\code{c} (the factor loading intercepts) when updating the branch assignment parameters
+\code{gamma} which tends to soften the branch assignments.
 }
 

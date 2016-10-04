@@ -4,7 +4,12 @@
 \alias{plot_chi}
 \title{Plot posterior precision parameters}
 \usage{
-plot_chi(m)
+plot_chi(m, nfeatures = m$G)
+}
+\arguments{
+\item{m}{A fit returned from \code{mfa}}
+
+\item{nfeatures}{Top number of}
 }
 \description{
 Plot posterior precision parameters

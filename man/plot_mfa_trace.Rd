@@ -6,6 +6,9 @@
 \usage{
 plot_mfa_trace(m)
 }
+\arguments{
+\item{m}{A fit returned from \code{mfa}}
+}
 \description{
 Plot MFA trace
 }

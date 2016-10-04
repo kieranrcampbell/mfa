@@ -4,7 +4,12 @@
 \alias{print.mfa}
 \title{Print an mfa fit}
 \usage{
-\method{print}{mfa}(x)
+\method{print}{mfa}(x, ...)
+}
+\arguments{
+\item{x}{An MFA fit returned by \code{mfa}}
+
+\item{...}{Additional arguments}
 }
 \description{
 Print an mfa fit

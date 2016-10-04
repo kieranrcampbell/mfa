@@ -8,11 +8,14 @@ Description: MFA models genomic bifurcations using a Bayesian hierarchical
 Depends:
     R (>= 3.3.0)
 Imports:
+    methods,
     ggplot2,
     Rcpp,
     dplyr,
     ggmcmc,
-    MCMCpack
+    MCMCpack,
+    MCMCglmm,
+    coda
 LinkingTo: Rcpp
 License: GPL >= 2
 Encoding: UTF-8
