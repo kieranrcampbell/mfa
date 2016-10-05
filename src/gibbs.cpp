@@ -311,7 +311,7 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
       for(int branch = 0; branch < b; branch++) {
         for(int g = 0; g < G; g++) {
           double y_ = y(i,g);
-          double sd = 1/sqrt( (1/tau_c) + (1/tau[g]) );
+          double sd = sqrt( (1/tau_c) + (1/tau[g]) );
         
           double comp_mean = eta[branch] + k(g, branch) * pst[i];
           comp_ll[branch] += log_d_norm(y_, comp_mean, sd);

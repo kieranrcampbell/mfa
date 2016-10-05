@@ -120,7 +120,7 @@ to_ggmcmc <- function(g) {
 #' \item \code{thin} Thinning applied
 #' \item \code{burn} Burn period at the start of MCMC
 #' \item \code{b} Number of branches modelled
-#' \item \code{collapse} Whether collapsed Gibbs sampling was used for branch assignment parameters
+#' \item \code{prop_collapse} Proportion of updates for gamma that are collapsed
 #' \item \code{N} Number of cells
 #' \item \code{G} Number of features (genes/transcripts)
 #' \item \code{feature_names} Names of features
@@ -131,7 +131,7 @@ to_ggmcmc <- function(g) {
 #' @importFrom stats prcomp nls coef sd lm rnorm rgamma
 #' @useDynLib mfa
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
-                pc_initialise = 1, collapse = FALSE, seed = 123L,
+                pc_initialise = 1, prop_collapse = 0, seed = 123L,
                 eta_tilde = mean(y), alpha = 1, beta = 1,
                 theta_tilde = 0, tau_eta = 1, tau_theta = 1,
                 alpha_chi = 1, beta_chi = 1, w_alpha = 1 / b) {
@@ -227,6 +227,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     chi_new <- rgamma(G, alpha_new, beta_new)
 
     # Gamma sampling
+    collapse <- runif(1) < prop_collapse
     pi <-  calculate_pi(y, c_new, k_new, pst_new, tau_new, eta_new, tau_c, collapse, log(w))
     gamma <- r_bernoulli_mat(pi) + 1 # need +1 to convert from C++ to R
     
