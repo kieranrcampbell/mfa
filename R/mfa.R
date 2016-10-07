@@ -133,7 +133,7 @@ to_ggmcmc <- function(g) {
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 pc_initialise = 1, prop_collapse = 0, seed = 123L,
                 eta_tilde = mean(y), alpha = 1, beta = 1,
-                theta_tilde = 0, tau_eta = 1, tau_theta = 1,
+                theta_tilde = 0, tau_eta = 1, tau_theta = 1, tau_c = 1,
                 alpha_chi = 1, beta_chi = 1, w_alpha = 1 / b) {
   
   # set.seed(seed)
@@ -168,9 +168,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   eta <- colMeans(c)
   
   chi <- rep(1, G) # rgamma(G, alpha_chi, beta_chi)
-  tau_c <- 1 # 0.1 # rgamma(G, alpha_c, beta_c)
-  
-  
+
   ## assignments for each cell
   w <- rep(1/b, b) # prior probability of each branch
   gamma <- sample(seq_len(b), N, replace = TRUE, prob=w) # as.numeric( pst < mean(pst)  ) 
@@ -222,7 +220,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     eta_new <- rnorm(length(nu_eta), nu_eta, 1 / sqrt(lambda_eta))
     
     # Chi sampling
-    alpha_new <- alpha_chi + 1
+    alpha_new <- alpha_chi + b / 2
     beta_new <- beta_chi + 0.5 * rowSums( (k_new - theta_new)^2 )
     chi_new <- rgamma(G, alpha_new, beta_new)
 
