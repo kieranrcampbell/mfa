@@ -58,16 +58,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // calculate_lamk
-NumericVector calculate_lamk(NumericVector tau_k, NumericVector tau, NumericVector pst, LogicalVector which_l);
-RcppExport SEXP mfa_calculate_lamk(SEXP tau_kSEXP, SEXP tauSEXP, SEXP pstSEXP, SEXP which_lSEXP) {
+NumericVector calculate_lamk(NumericVector chi, NumericVector tau, NumericVector pst, LogicalVector which_l);
+RcppExport SEXP mfa_calculate_lamk(SEXP chiSEXP, SEXP tauSEXP, SEXP pstSEXP, SEXP which_lSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type tau_k(tau_kSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type chi(chiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type tau(tauSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type pst(pstSEXP);
     Rcpp::traits::input_parameter< LogicalVector >::type which_l(which_lSEXP);
-    rcpp_result_gen = Rcpp::wrap(calculate_lamk(tau_k, tau, pst, which_l));
+    rcpp_result_gen = Rcpp::wrap(calculate_lamk(chi, tau, pst, which_l));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -136,6 +136,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pst_update_par
+NumericMatrix pst_update_par(NumericMatrix y, NumericMatrix c, NumericMatrix k, double r, NumericVector gamma, NumericVector tau);
+RcppExport SEXP mfa_pst_update_par(SEXP ySEXP, SEXP cSEXP, SEXP kSEXP, SEXP rSEXP, SEXP gammaSEXP, SEXP tauSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type c(cSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type r(rSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type tau(tauSEXP);
+    rcpp_result_gen = Rcpp::wrap(pst_update_par(y, c, k, r, gamma, tau));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sample_pst
 NumericVector sample_pst(NumericMatrix y, NumericMatrix c, NumericMatrix k, double r, NumericVector gamma, NumericVector tau);
 RcppExport SEXP mfa_sample_pst(SEXP ySEXP, SEXP cSEXP, SEXP kSEXP, SEXP rSEXP, SEXP gammaSEXP, SEXP tauSEXP) {
@@ -149,6 +165,23 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type gamma(gammaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type tau(tauSEXP);
     rcpp_result_gen = Rcpp::wrap(sample_pst(y, c, k, r, gamma, tau));
+    return rcpp_result_gen;
+END_RCPP
+}
+// tau_params
+NumericMatrix tau_params(NumericMatrix y, NumericMatrix c, NumericMatrix k, NumericVector gamma, NumericVector pst, double alpha, double beta);
+RcppExport SEXP mfa_tau_params(SEXP ySEXP, SEXP cSEXP, SEXP kSEXP, SEXP gammaSEXP, SEXP pstSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type c(cSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type k(kSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type pst(pstSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(tau_params(y, c, k, gamma, pst, alpha, beta));
     return rcpp_result_gen;
 END_RCPP
 }

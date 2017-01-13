@@ -17,8 +17,8 @@ calculate_nuk <- function(y, pst, c, tau, theta, tau_k, which_l) {
     .Call('mfa_calculate_nuk', PACKAGE = 'mfa', y, pst, c, tau, theta, tau_k, which_l)
 }
 
-calculate_lamk <- function(tau_k, tau, pst, which_l) {
-    .Call('mfa_calculate_lamk', PACKAGE = 'mfa', tau_k, tau, pst, which_l)
+calculate_lamk <- function(chi, tau, pst, which_l) {
+    .Call('mfa_calculate_lamk', PACKAGE = 'mfa', chi, tau, pst, which_l)
 }
 
 sample_k <- function(y, pst, c, tau, theta, tau_k, which_l) {
@@ -37,8 +37,16 @@ sample_c <- function(y, pst, k, tau, eta, tau_c, which_l, N) {
     .Call('mfa_sample_c', PACKAGE = 'mfa', y, pst, k, tau, eta, tau_c, which_l, N)
 }
 
+pst_update_par <- function(y, c, k, r, gamma, tau) {
+    .Call('mfa_pst_update_par', PACKAGE = 'mfa', y, c, k, r, gamma, tau)
+}
+
 sample_pst <- function(y, c, k, r, gamma, tau) {
     .Call('mfa_sample_pst', PACKAGE = 'mfa', y, c, k, r, gamma, tau)
+}
+
+tau_params <- function(y, c, k, gamma, pst, alpha, beta) {
+    .Call('mfa_tau_params', PACKAGE = 'mfa', y, c, k, gamma, pst, alpha, beta)
 }
 
 sample_tau <- function(y, c, k, gamma, pst, alpha, beta) {

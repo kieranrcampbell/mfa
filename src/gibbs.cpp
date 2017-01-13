@@ -72,7 +72,7 @@ NumericVector calculate_nuk(NumericMatrix y, NumericVector pst, NumericVector c,
 }
 
 //[[Rcpp::export]]
-NumericVector calculate_lamk(NumericVector tau_k, NumericVector tau, 
+NumericVector calculate_lamk(NumericVector chi, NumericVector tau, 
                              NumericVector pst, LogicalVector which_l) {
   int G = tau.size();
   int N = pst.size();
@@ -85,7 +85,7 @@ NumericVector calculate_lamk(NumericVector tau_k, NumericVector tau,
       pst_sum += pst[i] * pst[i];
   }
   
-  lamk = tau * pst_sum + tau_k;
+  lamk = tau * pst_sum + chi;
 
   return lamk;
 }
@@ -150,6 +150,8 @@ NumericVector calculate_lamc(NumericVector tau, double tau_c, int N) {
 NumericVector sample_c(NumericMatrix y, NumericVector pst, NumericVector k,
                        NumericVector tau, double eta, double tau_c,
                        LogicalVector which_l, int N) {
+  // here N is number of cells on current branch
+  
   int G = k.size();
   NumericVector nuc = calculate_nuc(y, pst, k, tau, eta, tau_c, which_l);
   NumericVector lamc = calculate_lamc(tau, tau_c, N);
@@ -174,6 +176,7 @@ NumericVector sample_c(NumericMatrix y, NumericVector pst, NumericVector k,
  *consistency with previous results.
  */
 
+// [[Rcpp::export]]
 NumericMatrix pst_update_par(NumericMatrix y, NumericMatrix c, NumericMatrix k, 
                           double r, NumericVector gamma, NumericVector tau) {
   int N = y.nrow();
@@ -222,7 +225,7 @@ NumericVector sample_pst(NumericMatrix y, NumericMatrix c, NumericMatrix k,
   return pst_new;
 }
 
-
+//[[Rcpp::export]]
 NumericMatrix tau_params(NumericMatrix y, NumericMatrix c, NumericMatrix k,
                          NumericVector gamma, NumericVector pst, double alpha, double beta) {
   int N = y.nrow();

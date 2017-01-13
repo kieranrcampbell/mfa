@@ -20,7 +20,7 @@ log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
 #' Calculate the log-posterior during inference
 #' 
 #' @importFrom stats dgamma dnorm
-posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha, beta,
+posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, w, tau_c, r, alpha, beta,
                       theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_chi, beta_chi) {
   G <- ncol(y)
   N <- nrow(y)
@@ -40,7 +40,8 @@ posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha
     sum(dnorm(eta, eta_tilde, 1 / sqrt(tau_eta), log = TRUE)) +
     sum(dgamma(tau, alpha, beta, log = TRUE)) +
     sum(dnorm(pst, 0, 1 / r, log = TRUE)) +
-    sum(dgamma(chi, alpha_chi, beta_chi, log = TRUE)) 
+    sum(dgamma(chi, alpha_chi, beta_chi, log = TRUE)) +
+    log(MCMCpack::ddirichlet(w, rep(1/b, b)))
   
   k_prior <- sum( apply(k, 2, function(k_b) sum(dnorm(k_b, theta, 1 / sqrt(chi), log = TRUE))) )
   c_prior <- sum( sapply(seq_len(b), function(branch) sum(dnorm(c[,branch], eta[branch], 1 / sqrt(tau_c), log = TRUE)))) 
@@ -254,7 +255,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
       eta_trace[sample_pos,] <- eta
 
       post <- posterior(y, c, k, pst,
-                        tau, gamma, theta, eta, chi, tau_c, r,
+                        tau, gamma, theta, eta, chi, w, tau_c, r,
                         alpha, beta, theta_tilde, 
                         eta_tilde, tau_theta, tau_eta,
                         alpha_chi, beta_chi)
