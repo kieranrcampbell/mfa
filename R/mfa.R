@@ -184,8 +184,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   
   chi_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "chi")
   
-  k_trace <- array(dim = c(nsamples, b, G))
-  c_trace <- array(dim = c(nsamples, b, G))
+  k_trace <- array(dim = c(nsamples, G, b))
+  c_trace <- array(dim = c(nsamples, G, b))
   
   tau_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "tau")
   
@@ -253,6 +253,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
       chi_trace[sample_pos,] <- chi
       lambda_theta_trace[sample_pos,] <- lambda_theta
       eta_trace[sample_pos,] <- eta
+      k_trace[sample_pos,,] <- k
+      c_trace[sample_pos,,] <- c
 
       post <- posterior(y, c, k, pst,
                         tau, gamma, theta, eta, chi, w, tau_c, r,
@@ -264,7 +266,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   }
   traces <- list(tau_trace = tau_trace, gamma_trace = gamma_trace,
                       pst_trace = pst_trace, theta_trace = theta_trace, lambda_theta_trace = lambda_theta_trace, chi_trace = chi_trace,
-                      eta_trace = eta_trace, lp_trace = lp_trace)
+                      eta_trace = eta_trace, k_trace = k_trace, c_trace = c_trace,
+                 lp_trace = lp_trace)
   mfa_res <- structure(list(traces = traces, iter = iter, thin = thin, burn = burn,
                             b = b, collapse = collapse, N = N, G = G,
                             feature_names = feature_names, cell_names = cell_names), 
