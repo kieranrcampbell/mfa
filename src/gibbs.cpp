@@ -275,7 +275,8 @@ NumericVector sample_tau(NumericMatrix y, NumericMatrix c, NumericMatrix k,
 
 // [[Rcpp::export]]
 NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, NumericVector pst, NumericVector tau, 
-                           NumericVector eta, double tau_c, bool collapse, NumericVector log_w) {
+                           double eta, double tau_c, bool collapse, NumericVector log_w,
+                           bool log_result) {
   int N = y.nrow();
   int G = y.ncol();
   int b = c.ncol(); // number of branches
@@ -294,19 +295,26 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
           double sd = 1 / sqrt(tau[g]);
         
           double comp_mean = c(g, branch) + k(g, branch) * pst[i];
-          // std::cout << comp_mean << " ";
+          // std::cout << comp_mean << " " << std::endl;
           comp_ll[branch] += log_d_norm(y_, comp_mean, sd);
         }
         // std::cout << std::endl;
         comp_ll[branch] += log_w[branch];
+        // std::cout << comp_ll[branch] << std::endl;
       }
 
       for(int branch = 0; branch < b; branch++) {
         // std::cout << comp_ll[branch] << " ";
-        pi(i, branch) = exp(comp_ll[branch] - log_sum_exp(comp_ll));
+        if(!log_result) {
+          pi(i, branch) = exp(comp_ll[branch] - log_sum_exp(comp_ll));
+        } else {
+          pi(i, branch) = comp_ll[branch] - log_sum_exp(comp_ll);
+        }
+      
       }
-      // std::cout << std::endl;
+
     }
+     
   } else {
     for(int i = 0; i < N; i++) {
       NumericVector comp_ll(b, 0.0); // log-likelihood vector for each branch, default to 0.0
@@ -316,7 +324,7 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
           double y_ = y(i,g);
           double sd = sqrt( (1/tau_c) + (1/tau[g]) );
         
-          double comp_mean = eta[branch] + k(g, branch) * pst[i];
+          double comp_mean = eta + k(g, branch) * pst[i];
           comp_ll[branch] += log_d_norm(y_, comp_mean, sd);
         }
         comp_ll[branch] += log_w[branch]; 
@@ -335,35 +343,24 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
 
 // [[Rcpp::export]]
 NumericMatrix sample_x(NumericMatrix x, LogicalMatrix is_dropout,
-                       NumericVector c0, NumericVector c1, NumericVector k0, NumericVector k1,
-                           NumericVector gamma, NumericVector pst, NumericVector tau, double lambda) {
+                       NumericMatrix c, NumericMatrix k, 
+                       NumericVector gamma, NumericVector pst, 
+                       NumericVector tau, double lambda) {
   int N = x.nrow();
   int G = x.ncol();
-  
-  NumericVector k(G);
-  NumericVector c(G);
   
   NumericMatrix x_new(N, G);
   
 
   for(int i = 0; i < N; i++) {
-    if(gamma[i] == 0) {
-      k = k0;
-      c = c0;
-    } else {
-      k = k1;
-      c = c1;
-    }
     for(int g = 0; g < G; g++) {
       if(is_dropout(i,g) == true) {
-        double mu_ig = c[g] + k[g] * pst[i]; 
-        x_new(i,g) = as<double>(rnorm(1, mu_ig + lambda / (N * tau[g]), 1 / sqrt(tau[g])));
+        double mu = c(g, gamma[i] - 1) + k(g, gamma[i] - 1) * pst[i];
+        x_new(i,g) = as<double>(rnorm(1, mu - lambda / (N * tau[g]), 1 / sqrt(tau[g])));
       } else {
         x_new(i,g) = x(i,g);
       }
     }
   }
-  
-  
   return x_new;
 }

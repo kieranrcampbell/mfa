@@ -111,11 +111,7 @@ mfa_zi <- function(y, iter = 2000, thin = 1, burn = iter / 2, lambda = 1,
 
   rownames(y) <- colnames(y) <- NULL
   
-  x <- y
-  is_dropout <- x == 0
-  
-  ## Just store the posterior mean of x to avoid huge overheads
-  x_mean_trace <- matrix(0, nrow = nrow(x), ncol = ncol(x))
+
   
   for(it in 1:iter) {
     
@@ -223,9 +219,10 @@ zi_log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
 
 
 empirical_lambda <- function(Y) {
+  N <- nrow(Y)
   means <- colMeans(Y)
   pdrop <- colMeans(Y == 0)
-  fit <- nls(pdrop ~ exp(-lambda * means), start = list(lambda = 1))
+  fit <- nls(pdrop ~ exp(-lambda * means / N), start = list(lambda = 1))
   coef(fit)['lambda']
 }
 

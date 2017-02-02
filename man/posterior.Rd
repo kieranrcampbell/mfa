@@ -4,8 +4,9 @@
 \alias{posterior}
 \title{Calculate the log-posterior during inference}
 \usage{
-posterior(y, c, k, pst, tau, gamma, theta, eta, chi, tau_c, r, alpha, beta,
-  theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_chi, beta_chi)
+posterior(y, c, k, pst, tau, gamma, theta, eta, chi, w, tau_c, r, alpha, beta,
+  theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_chi, beta_chi,
+  zero_inflation = FALSE, lambda = NULL)
 }
 \description{
 Calculate the log-posterior during inference

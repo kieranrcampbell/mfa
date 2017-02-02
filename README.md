@@ -1,4 +1,4 @@
-## mfa
+## mfa - Bayesian inference of bifurcations in single-cell data
 
 `mfa` is an R package implementing Gibbs sampling for a Bayesian hierarchichal mixture of factor analysers for inference of bifurcations in single-cell data.
 

@@ -3,6 +3,7 @@
 S3method(print,mfa)
 S3method(summary,mfa)
 export(calculate_chi)
+export(empirical_lambda)
 export(mfa)
 export(plot_chi)
 export(plot_mfa_autocorr)

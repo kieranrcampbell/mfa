@@ -4,10 +4,12 @@
 \alias{mfa}
 \title{Fit a MFA object}
 \usage{
-mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
-  collapse = FALSE, seed = 123L, eta_tilde = mean(y), alpha = 1,
-  beta = 1, theta_tilde = 0, tau_eta = 1, tau_theta = 1,
-  alpha_chi = 1, beta_chi = 1, w_alpha = 1/b)
+mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2,
+  zero_inflation = FALSE, pc_initialise = 1, prop_collapse = 0,
+  scale_input = !zero_inflation, lambda = empirical_lambda(y),
+  eta_tilde = mean(y), alpha = 0.1, beta = 0.1, theta_tilde = 0,
+  tau_eta = 1, tau_theta = 1, tau_c = 1, alpha_chi = 0.01,
+  beta_chi = 0.01, w_alpha = 1/b, clamp_pseudotimes = FALSE)
 }
 \arguments{
 \item{y}{A cell-by-gene single-cell expression matrix}
@@ -22,9 +24,9 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
 
 \item{pc_initialise}{Which principal component to initialise pseudotimes to}
 
-\item{collapse}{Collapsed Gibbs sampling of branch assignments}
+\item{scale_input}{Logical. If true, input is scaled to have mean 0 variance 1}
 
-\item{seed}{Random seed to set}
+\item{lambda}{The dropout parameter - by default estimated using the function \code{empirical_lambda}}
 
 \item{eta_tilde}{Hyperparameter}
 
@@ -43,6 +45,15 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2, pc_initialise = 1,
 \item{beta_chi}{Hyperparameter}
 
 \item{w_alpha}{Hyperparameter}
+
+\item{clamp_pseudotimes}{This clamps the pseudotimes to their initial values and
+doesn't perform sampling. Should be FALSE except for diagnostics.}
+
+\item{zero_inflated}{Logical, should zero inflation be enabled?}
+
+\item{collapse}{Collapsed Gibbs sampling of branch assignments}
+
+\item{seed}{Random seed to set}
 }
 \value{
 An S3 structure with the following entries:
@@ -52,7 +63,7 @@ An S3 structure with the following entries:
 \item \code{thin} Thinning applied
 \item \code{burn} Burn period at the start of MCMC
 \item \code{b} Number of branches modelled
-\item \code{collapse} Whether collapsed Gibbs sampling was used for branch assignment parameters
+\item \code{prop_collapse} Proportion of updates for gamma that are collapsed
 \item \code{N} Number of cells
 \item \code{G} Number of features (genes/transcripts)
 \item \code{feature_names} Names of features
@@ -88,5 +99,8 @@ gamma prior on \code{chi}. The mean of this is \code{alpha_chi / beta_chi} while
 The collapsed Gibbs sampling option given by \code{collapse} involves marginalising out
 \code{c} (the factor loading intercepts) when updating the branch assignment parameters
 \code{gamma} which tends to soften the branch assignments.
+
+If zero inflation is enabled using the \code{zero_inflation} parameter then scaling should 
+*not* be enabled.
 }
 
