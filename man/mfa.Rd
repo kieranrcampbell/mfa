@@ -6,10 +6,10 @@
 \usage{
 mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2,
   zero_inflation = FALSE, pc_initialise = 1, prop_collapse = 0,
-  scale_input = !zero_inflation, lambda = empirical_lambda(y),
-  eta_tilde = mean(y), alpha = 0.1, beta = 0.1, theta_tilde = 0,
-  tau_eta = 1, tau_theta = 1, tau_c = 1, alpha_chi = 0.01,
-  beta_chi = 0.01, w_alpha = 1/b, clamp_pseudotimes = FALSE)
+  scale_input = !zero_inflation, lambda = NULL, eta_tilde = NULL,
+  alpha = 0.1, beta = 0.1, theta_tilde = 0, tau_eta = 1,
+  tau_theta = 1, tau_c = 1, alpha_chi = 0.01, beta_chi = 0.01,
+  w_alpha = 1/b, clamp_pseudotimes = FALSE)
 }
 \arguments{
 \item{y}{A cell-by-gene single-cell expression matrix}
