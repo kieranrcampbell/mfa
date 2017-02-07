@@ -147,11 +147,15 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 zero_inflation = FALSE,
                 pc_initialise = 1, prop_collapse = 0,
                 scale_input = !zero_inflation,
-                lambda = empirical_lambda(y),
-                eta_tilde = mean(y), alpha = 1e-1, beta = 1e-1,
+                lambda = NULL,
+                eta_tilde = NULL, alpha = 1e-1, beta = 1e-1,
                 theta_tilde = 0, tau_eta = 1, tau_theta = 1, tau_c = 1,
                 alpha_chi = 1e-2, beta_chi = 1e-2, w_alpha = 1 / b,
                 clamp_pseudotimes = FALSE) {
+  
+  ## Sort hyperpars
+  if(is.null(eta_tilde)) eta_tilde <- mean(y)
+  if(is.null(lambda) && zero_inflation) lambda <- empirical_lambda(y)
   
   N <- nrow(y)
   G <- ncol(y)
