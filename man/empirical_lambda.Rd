@@ -4,7 +4,7 @@
 \alias{empirical_lambda}
 \title{Estimate the dropout parameter}
 \usage{
-empirical_lambda(Y)
+empirical_lambda(y, lower_limit = 0)
 }
 \arguments{
 \item{y}{A cell-by-gene expression matrix}

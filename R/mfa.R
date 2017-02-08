@@ -157,6 +157,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   if(is.null(eta_tilde)) eta_tilde <- mean(y)
   if(is.null(lambda) && zero_inflation) lambda <- empirical_lambda(y)
   
+  print(paste("Lambda:", lambda))
+  
   N <- nrow(y)
   G <- ncol(y)
   message(paste("Sampling for", N, "cells and", G, "genes"))
@@ -460,4 +462,29 @@ empirical_lambda <- function(y, lower_limit = 0) {
   fit <- nls(pdrop ~ exp(-lambda * means), start = list(lambda = 1))
   coef(fit)['lambda']
 }
+
+#' Plot the dropout relationship
+#' 
+#' @param y The input data matrix
+#' @param lambda The estimated value of lambda
+#' 
+#' @import ggplot2
+#' @importFrom magrittr %>%
+#' @importFrom dplyr arrange
+#' @importFrom tibble data_frame
+#' 
+#' @export
+#' @return A \code{ggplot2} plot showing the estimated dropout relationship
+plot_dropout_relationship <- function(y, lambda = empirical_lambda(y)) {
+  ff <- function(x, lambda) exp(- lambda * x)
+  d <- data_frame(mean = colMeans(y), pdrop = colMeans(y == 0)) %>% 
+    dplyr::mutate(fit = ff(mean, lambda))
+  
+  ggplot(arrange(d, desc(fit)), aes(x = mean)) + 
+    geom_point(aes(y = pdrop), size = 1, alpha = 0.5) +
+    geom_line(aes(y = fit), color = 'red') +
+    xlab("Mean expression") + ylab("Proportion dropout")
+  
+}
+
 
