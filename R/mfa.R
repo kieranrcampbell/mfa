@@ -26,9 +26,10 @@ posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, w, tau_c, r, al
   G <- ncol(y)
   N <- nrow(y)
   b <- ncol(k)
+
   
   ll_cell <- sapply(seq_len(N), function(i) {
-    sum(dnorm(y[i,], c[,gamma[i]] + k[,gamma[i]] * pst[i], 1 / sqrt(tau), log = TRUE))
+    sum(dnorm(y[i,], c[,gamma[i]] + k[,gamma[i]] * pst[i], 1 / sqrt(tau), log = TRUE)) + log(w[gamma[i]])
   })
   
   ll <- sum(ll_cell)
@@ -77,11 +78,10 @@ to_ggmcmc <- function(g) {
 #' @param thin MCMC samples to thin
 #' @param burn Number of MCMC samples to throw away
 #' @param b Number of branches to model
-#' @param zero_inflated Logical, should zero inflation be enabled?
+#' @param zero_inflation Logical, should zero inflation be enabled?
 #' @param lambda The dropout parameter - by default estimated using the function \code{empirical_lambda}
 #' @param pc_initialise Which principal component to initialise pseudotimes to
-#' @param collapse Collapsed Gibbs sampling of branch assignments
-#' @param seed Random seed to set
+#' @param prop_collapse Proportion of Gibbs samples which should marginalise over c
 #' @param scale_input Logical. If true, input is scaled to have mean 0 variance 1
 #' @param eta_tilde Hyperparameter
 #' @param alpha Hyperparameter
@@ -89,6 +89,7 @@ to_ggmcmc <- function(g) {
 #' @param theta_tilde Hyperparameter
 #' @param tau_eta Hyperparameter
 #' @param tau_theta Hyperparameter
+#' @param tau_c Hyperparameter
 #' @param alpha_chi Hyperparameter
 #' @param beta_chi Hyperparameter
 #' @param w_alpha Hyperparameter
@@ -157,7 +158,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   if(is.null(eta_tilde)) eta_tilde <- mean(y)
   if(is.null(lambda) && zero_inflation) lambda <- empirical_lambda(y)
   
-  print(paste("Lambda:", lambda))
+  # print(paste("Lambda:", lambda))
   
   N <- nrow(y)
   G <- ncol(y)
@@ -252,7 +253,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     tau_new <- sample_tau(x, c_new, k_new, gamma, pst_new, alpha, beta)
     
     # Theta sampling
-    lambda_theta <- 2 * chi + tau_theta
+    lambda_theta <- b * chi + tau_theta
     nu_theta <- tau_theta * theta_tilde + chi * rowSums(k_new)
     nu_theta <- nu_theta / lambda_theta
     theta_new <- rnorm(G, nu_theta, 1 / sqrt(lambda_theta))

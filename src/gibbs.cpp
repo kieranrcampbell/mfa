@@ -300,7 +300,6 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
         }
         // std::cout << std::endl;
         comp_ll[branch] += log_w[branch];
-        // std::cout << comp_ll[branch] << std::endl;
       }
 
       for(int branch = 0; branch < b; branch++) {
@@ -329,8 +328,15 @@ NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, Nu
         }
         comp_ll[branch] += log_w[branch]; 
       }
-      for(int branch = 0; branch < b; branch++)
-        pi(i, branch) = exp( comp_ll[branch] - log_sum_exp(comp_ll));
+      for(int branch = 0; branch < b; branch++) {
+        // std::cout << comp_ll[branch] << " ";
+        if(!log_result) {
+          pi(i, branch) = exp(comp_ll[branch] - log_sum_exp(comp_ll));
+        } else {
+          pi(i, branch) = comp_ll[branch] - log_sum_exp(comp_ll);
+        }
+        
+      }
     }
   }
   return pi;
