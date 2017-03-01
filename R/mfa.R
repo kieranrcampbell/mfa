@@ -73,7 +73,7 @@ to_ggmcmc <- function(g) {
 #' Perform Gibbs sampling inference for a hierarchical Bayesian mixture of factor analysers
 #' to identify bifurcations in single-cell expression data.
 #' 
-#' @param y A cell-by-gene single-cell expression matrix
+#' @param y A cell-by-gene single-cell expression matrix or an ExpressionSet object
 #' @param iter Number of MCMC iterations
 #' @param thin MCMC samples to thin
 #' @param burn Number of MCMC samples to throw away
@@ -153,6 +153,16 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 theta_tilde = 0, tau_eta = 1, tau_theta = 1, tau_c = 1,
                 alpha_chi = 1e-2, beta_chi = 1e-2, w_alpha = 1 / b,
                 clamp_pseudotimes = FALSE) {
+  
+  ## Find out whether y is an expression set or matrix:
+  if(is(y, 'ExpressionSet')) {
+    message("Using `exprs` from y as input gene expression")
+    y <- t(exprs(y))
+  } else if(is.matrix(y)) {
+    # Possible future sanity checking
+  } else {
+    stop("Input to MFA must be either an ExpressionSet (e.g. from Scater) or a cell-by-gene matrix")
+  }
   
   ## Sort hyperpars
   if(is.null(eta_tilde)) eta_tilde <- mean(y)
@@ -487,5 +497,137 @@ plot_dropout_relationship <- function(y, lambda = empirical_lambda(y)) {
     xlab("Mean expression") + ylab("Proportion dropout")
   
 }
+
+
+#' Sigmoid function for activations - renamed to avoid naming conflict
+#' 
+#' @keywords internal
+cs_sigmoid <- function(t, phi, k, delta) {
+  return( 2 * phi / (1 + exp(-k*(t - delta))))
+}
+
+#' Transient mean function
+#' 
+#' @keywords internal
+transient <- function(t, location = 0.5, scale = 0.01, reverse = FALSE) {
+  y <- exp(- 1 / (2 * scale) * (t - location)^2)
+  if(reverse) y <- 1 - y
+  return(y)
+}
+
+#' Create synthetic data
+#' 
+#' @export
+create_synthetic <- function(C = 100, G = 40, p_transient = 0,
+                             zero_negative = TRUE, model_dropout = FALSE,
+                             lambda = 1) {
+  
+  branch <- rbinom(C, 1, 0.5)
+  
+  gsd <- sqrt(1 / rgamma(G, 2, 2))
+  
+  
+  ## We assume first G / 2 (= 20) genes are common to both branches, and the 
+  ## final G / 2 genes exhibit branching structure. We want to build in the 
+  ## fact that delta < 0.5 for the common genes and delta > 0.5 for the 
+  ## branch specific genes
+  
+  k <- replicate(2, runif(G, 5, 10) * sample(c(-1, 1), G, replace = TRUE))
+  phi <- replicate(2, runif(G, 5, 10))
+  delta <- replicate(2, runif(G, 0.5, 1))
+  
+  # Non bifurcating genes
+  inds <- 1:(G / 2)
+  
+  # Bifurcating genes
+  inds2 <- (G/2 + 1):G
+  
+  # For non-bifurcating genes, set behaviour identical across the two branches
+  k[inds, 2] <- k[inds, 1]
+  
+  k[inds2, ] <- t(apply(k[inds2, ], 1, function(r) r * sample(c(0, 1))))
+  
+  phi[, 1] <- phi[, 2]
+  delta[inds, 2] <- delta[inds, 1] <- runif(G / 2, 0, 0.5)
+  
+  ## Now make it look like a branching process
+  for(r in inds2) {
+    whichzero <- which(k[r,] == 0)
+    nonzero <- which(k[r,] != 0)
+    k_sign <- sign(k[r,nonzero])
+    if(k_sign == 1) {
+      phi[r, whichzero] <- 0
+    } else {
+      phi[r, whichzero] <- 2 * phi[r, nonzero]
+    }
+  }
+  
+  pst <- runif(C)
+  
+  X <- sapply(seq_along(branch), function(i) {
+    k_i <- k[, branch[i] + 1]
+    phi_i <- phi[, branch[i] + 1]
+    delta_i <- delta[, branch[i] + 1]
+    mu <- cs_sigmoid(pst[i], phi_i, k_i, delta_i)
+    rnorm(length(mu), mu, gsd)
+  })
+  
+  ## Now let's add in the transient genes
+  
+  transient_genes <- sample(C, round(p_transient * C))
+  transient_genes_common <- intersect(transient_genes, inds)
+  transient_genes_bifurcating <- intersect(transient_genes, inds2)
+  
+  
+  # Deal with non-bifurcating ones
+  if(length(transient_genes_common) > 0) {
+    X[transient_genes_common,] <- t(sapply(transient_genes_common, function(g) {
+      scale <- rlnorm(1, log(0.05), 0.5)
+      reverse <- sample(c(T,F), 1)
+      mu <- 2 * phi[g, 1] * transient(pst, scale = scale, reverse = reverse)
+      rnorm(length(mu), mu, gsd[g])
+    }))
+  }
+  
+  # Deal with bifurcating ones
+  if(length(transient_genes_bifurcating) > 0) {
+    X[transient_genes_bifurcating,] <- t(sapply(transient_genes_bifurcating, function(g) {
+      which_nonzero <- which(k[g,] != 0) # we're going to make this one transient
+      scale <- rlnorm(1, log(0.05), 0.3)
+      reverse <- k[g, which_nonzero] < 0
+      mu <- 2 * phi[g, which_nonzero] * transient(pst, location = 0.75, 
+                                                  scale = scale, reverse = reverse)
+      
+      cells_on_constant_branch <- which(branch != which_nonzero)
+      cells_on_transient_branch <- which(branch == which_nonzero)
+      
+      y <- rep(NA, C)
+      y[cells_on_transient_branch] <- rnorm(length(cells_on_transient_branch), 
+                                            mu[cells_on_transient_branch], gsd[g])
+      y[cells_on_constant_branch] <- X[g, cells_on_constant_branch]
+      return( y )
+    }))
+  }
+  
+  if(zero_negative) {
+    X[X < 0] <- 0
+  }
+  
+  if(model_dropout && lambda < Inf) {
+    drop_probs <- t(apply(X, 1, function(x) exp(-lambda * x)))
+    for(g in seq_len(G)) {
+      drop <- runif(C) < drop_probs[g, ]
+      X[g,drop] <- 0
+    }
+  }
+  
+  X <- t(X) # cell by gene
+  colnames(X) <- paste0("feature", 1:G)
+  rownames(X) <- paste0("cell", 1:C)
+  
+  list(X = X, branch = branch, pst = pst, k = k, phi = phi,
+       delta = delta, p_transient = p_transient)
+}
+
 
 

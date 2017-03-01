@@ -22,7 +22,11 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2,
 
 \item{b}{Number of branches to model}
 
+\item{zero_inflation}{Logical, should zero inflation be enabled?}
+
 \item{pc_initialise}{Which principal component to initialise pseudotimes to}
+
+\item{prop_collapse}{Proportion of Gibbs samples which should marginalise over c}
 
 \item{scale_input}{Logical. If true, input is scaled to have mean 0 variance 1}
 
@@ -40,6 +44,8 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2,
 
 \item{tau_theta}{Hyperparameter}
 
+\item{tau_c}{Hyperparameter}
+
 \item{alpha_chi}{Hyperparameter}
 
 \item{beta_chi}{Hyperparameter}
@@ -48,12 +54,6 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2,
 
 \item{clamp_pseudotimes}{This clamps the pseudotimes to their initial values and
 doesn't perform sampling. Should be FALSE except for diagnostics.}
-
-\item{zero_inflated}{Logical, should zero inflation be enabled?}
-
-\item{collapse}{Collapsed Gibbs sampling of branch assignments}
-
-\item{seed}{Random seed to set}
 }
 \value{
 An S3 structure with the following entries:

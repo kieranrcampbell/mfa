@@ -53,8 +53,8 @@ sample_tau <- function(y, c, k, gamma, pst, alpha, beta) {
     .Call('mfa_sample_tau', PACKAGE = 'mfa', y, c, k, gamma, pst, alpha, beta)
 }
 
-calculate_pi <- function(y, c, k, pst, tau, eta, tau_c, collapse, log_w, log_result, experimental) {
-    .Call('mfa_calculate_pi', PACKAGE = 'mfa', y, c, k, pst, tau, eta, tau_c, collapse, log_w, log_result, experimental)
+calculate_pi <- function(y, c, k, pst, tau, eta, tau_c, collapse, log_w, log_result) {
+    .Call('mfa_calculate_pi', PACKAGE = 'mfa', y, c, k, pst, tau, eta, tau_c, collapse, log_w, log_result)
 }
 
 sample_x <- function(x, is_dropout, c, k, gamma, pst, tau, lambda) {

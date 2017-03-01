@@ -203,8 +203,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // calculate_pi
-NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, NumericVector pst, NumericVector tau, double eta, double tau_c, bool collapse, NumericVector log_w, bool log_result, bool experimental);
-RcppExport SEXP mfa_calculate_pi(SEXP ySEXP, SEXP cSEXP, SEXP kSEXP, SEXP pstSEXP, SEXP tauSEXP, SEXP etaSEXP, SEXP tau_cSEXP, SEXP collapseSEXP, SEXP log_wSEXP, SEXP log_resultSEXP, SEXP experimentalSEXP) {
+NumericMatrix calculate_pi(NumericMatrix y, NumericMatrix c, NumericMatrix k, NumericVector pst, NumericVector tau, double eta, double tau_c, bool collapse, NumericVector log_w, bool log_result);
+RcppExport SEXP mfa_calculate_pi(SEXP ySEXP, SEXP cSEXP, SEXP kSEXP, SEXP pstSEXP, SEXP tauSEXP, SEXP etaSEXP, SEXP tau_cSEXP, SEXP collapseSEXP, SEXP log_wSEXP, SEXP log_resultSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -218,8 +218,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type collapse(collapseSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type log_w(log_wSEXP);
     Rcpp::traits::input_parameter< bool >::type log_result(log_resultSEXP);
-    Rcpp::traits::input_parameter< bool >::type experimental(experimentalSEXP);
-    rcpp_result_gen = Rcpp::wrap(calculate_pi(y, c, k, pst, tau, eta, tau_c, collapse, log_w, log_result, experimental));
+    rcpp_result_gen = Rcpp::wrap(calculate_pi(y, c, k, pst, tau, eta, tau_c, collapse, log_w, log_result));
     return rcpp_result_gen;
 END_RCPP
 }
