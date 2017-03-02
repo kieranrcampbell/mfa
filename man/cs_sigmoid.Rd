@@ -6,6 +6,9 @@
 \usage{
 cs_sigmoid(t, phi, k, delta)
 }
+\value{
+Sigmoid function given the parameters
+}
 \description{
 Sigmoid function for activations - renamed to avoid naming conflict
 }

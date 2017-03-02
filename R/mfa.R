@@ -8,18 +8,48 @@ rbernoulli <- function(pi) sapply(pi, function(p) sample(c(0,1), 1,
 #' 
 #' @param m A fit returned from \code{mfa}
 #' @param name The name of the parameter
+#' 
+#' @keywords internal
+#' @return The input with consistent naming.
 mcmcify <- function(m, name) {
   colnames(m) <- paste0(name, "[", seq_len(ncol(m)),"]")
   return(m)
 }
 
-
+#' Log sum of exponentials
+#' @param x Vector of quantities
+#' @keywords internal
+#' @return Log sum of exponentials in a numerically stable manner.
 log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
 
 
 #' Calculate the log-posterior during inference
 #' 
+#' @param y Cell-by-gene gene expression matrix
+#' @param c Factor loading parameter
+#' @param k Factor loading parameter
+#' @param pst Pseudotime vector
+#' @param tau Precision parameter
+#' @param gamma Branch responsibility parameter
+#' @param theta Factor loading parameter
+#' @param eta Factor loading parameter
+#' @param chi ARD-like precision
+#' @param w Branch responsibility prior (simplex)
+#' @param tau_c Hyperparameter
+#' @param r Hyperparameter
+#' @param alpha Hyperparamter
+#' @param beta Hyperparameter
+#' @param theta_tilde Hyperparameter
+#' @param eta_tilde Hyperparameter
+#' @param tau_theta Hyperparameter
+#' @param tau_eta Hyperparameter
+#' @param alpha_chi Hyperparameter
+#' @param beta_chi Hyperparameter
+#' @param zero_inflation Logical - was zero inflation modelled?
+#' @param lambda Zero inflation parameter
+#' 
 #' @importFrom stats dgamma dnorm
+#' @return The posterior log-likelihood.
 posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, w, tau_c, r, alpha, beta,
                       theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_chi, beta_chi,
                       zero_inflation = FALSE, lambda = NULL) {
@@ -42,8 +72,11 @@ posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, w, tau_c, r, al
     sum(dgamma(chi, alpha_chi, beta_chi, log = TRUE)) +
     log(MCMCpack::ddirichlet(w, rep(1/b, b)))
   
-  k_prior <- sum( apply(k, 2, function(k_b) sum(dnorm(k_b, theta, 1 / sqrt(chi), log = TRUE))) )
-  c_prior <- sum( sapply(seq_len(b), function(branch) sum(dnorm(c[,branch], eta, 1 / sqrt(tau_c), log = TRUE)))) 
+  k_prior <- sum( apply(k, 2, function(k_b) sum(dnorm(k_b, theta, 1 / sqrt(chi), 
+                                                      log = TRUE))) )
+  c_prior <- sum( sapply(seq_len(b), function(branch) sum(dnorm(c[,branch], eta, 
+                                                                1 / sqrt(tau_c), 
+                                                                log = TRUE)))) 
   
   prior <- prior + k_prior + c_prior
   
@@ -60,7 +93,8 @@ posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, w, tau_c, r, al
 #' Turn a trace list to a \code{ggmcmc} object
 #' 
 #' @param g A list of trace matrices
-#' 
+#' @return The trace list converted into a \code{ggs} object for 
+#' input to \code{ggmcmc}. 
 to_ggmcmc <- function(g) {
   x <- do.call(cbind, g)
   mcmcl <- coda::mcmc.list(list(coda::mcmc(x)))
@@ -129,7 +163,8 @@ to_ggmcmc <- function(g) {
 #' @return 
 #' An S3 structure with the following entries:
 #' \itemize{
-#' \item \code{traces} A list of iteration-by-dim trace matrices for several important variables
+#' \item \code{traces} A list of iteration-by-dim trace matrices for 
+#' several important variables
 #' \item \code{iter} Number of iterations
 #' \item \code{thin} Thinning applied
 #' \item \code{burn} Burn period at the start of MCMC
@@ -143,6 +178,7 @@ to_ggmcmc <- function(g) {
 #' 
 #' @importFrom Rcpp evalCpp
 #' @importFrom stats prcomp nls coef sd lm rnorm rgamma
+#' @importFrom Biobase exprs
 #' @useDynLib mfa
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 zero_inflation = FALSE,
@@ -206,7 +242,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
 
   ## assignments for each cell
   w <- rep(1/b, b) # prior probability of each branch
-  gamma <- sample(seq_len(b), N, replace = TRUE, prob=w) # as.numeric( pst < mean(pst)  ) 
+  gamma <- sample(seq_len(b), N, replace = TRUE, prob=w) 
 
   nsamples <- floor((iter - burn) / thin)
   G_dim <- c(nsamples, G)
@@ -214,7 +250,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   
   eta_trace <- mcmcify(matrix(NA, nrow = nsamples, ncol = 1), "eta")
   theta_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "theta")
-  lambda_theta_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "lambda_theta")
+  lambda_theta_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), 
+                                "lambda_theta")
   
   chi_trace <- mcmcify(matrix(NA, nrow = G_dim[1], ncol = G_dim[2]), "chi")
   
@@ -249,8 +286,14 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   for(it in 1:iter) {
     
     # Factor loading matrix sampling
-    k_new <- sapply(seq_len(b), function(branch) sample_k(x, pst, c[, branch], tau, theta, chi, gamma == branch))
-    c_new <- sapply(seq_len(b), function(branch) sample_c(x, pst, k_new[, branch], tau, eta, tau_c, gamma == branch, sum(gamma == branch)))
+    k_new <- sapply(seq_len(b), function(branch) {
+        sample_k(x, pst, c[, branch], tau, theta, chi, gamma == branch) 
+      })
+    
+    c_new <- sapply(seq_len(b), function(branch) { 
+        sample_c(x, pst, k_new[, branch], tau, eta, tau_c, gamma == branch, 
+                 sum(gamma == branch)) 
+      })
     
     # Pseudotime sampling
     if(!clamp_pseudotimes) {
@@ -281,7 +324,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
 
     # Gamma sampling
     collapse <- runif(1) < prop_collapse
-    pi <-  calculate_pi(x, c_new, k_new, pst_new, tau_new, eta_new, tau_c, collapse, log(w),
+    pi <-  calculate_pi(x, c_new, k_new, pst_new, tau_new, eta_new, 
+                        tau_c, collapse, log(w),
                         log_result = FALSE)
     gamma <- r_bernoulli_mat(pi) + 1 # need +1 to convert from C++ to R
     
@@ -327,8 +371,9 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
     }
   }
   traces <- list(tau_trace = tau_trace, gamma_trace = gamma_trace,
-                      pst_trace = pst_trace, theta_trace = theta_trace, lambda_theta_trace = lambda_theta_trace, chi_trace = chi_trace,
-                      eta_trace = eta_trace, k_trace = k_trace, c_trace = c_trace,
+                      pst_trace = pst_trace, theta_trace = theta_trace, 
+                 lambda_theta_trace = lambda_theta_trace, chi_trace = chi_trace,
+                  eta_trace = eta_trace, k_trace = k_trace, c_trace = c_trace,
                  lp_trace = lp_trace)
   if(zero_inflation) traces$x_mean <- x_mean_trace / nsamples
   
@@ -344,6 +389,8 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
 #' @param ... Additional arguments
 #' 
 #' @export
+#' 
+#' @return A string representation of an \code{mfa} object.
 print.mfa <- function(x, ...) {
   msg <- paste("MFA fit with\n",
                x$N, "cells and", x$G, "genes\n",
@@ -353,30 +400,41 @@ print.mfa <- function(x, ...) {
 
 #' Plot MFA trace
 #' 
+#' Plots the trace of the posterior log-likelihood.
+#' 
 #' @param m A fit returned from \code{mfa}
 #' 
 #' @export
 #' 
 #' @importFrom methods is
+#' 
+#' @return A \code{ggplot2} plot plotting
+#' the trace of the posterior log-likelihood.
 plot_mfa_trace <- function(m) {
   stopifnot(is(m, "mfa"))
   lp <- m$traces$lp_trace[,1]
-  qplot(seq_along(lp), lp, geom = 'line') + stat_smooth(se = F) +
+  qplot(seq_along(lp), lp, geom = 'line') + stat_smooth(se = FALSE) +
     xlab("Iteration") + ylab("log-probability")
 }
 
 
 #' Plot MFA autocorrelation
 #' 
+#' Plots the autocorrelation of the posterior log-likelihood.
+#' 
 #' @param m A fit returned from \code{mfa}
 #' 
 #' @export
 #' @importFrom dplyr data_frame
 #' @importFrom methods is
+#' 
+#' @return A \code{ggplot2} plot returned by the \code{ggmcmc} package plotting
+#' the autocorrelation of the posterior log-likelihood.
 plot_mfa_autocorr <- function(m) {
   stopifnot(is(m, "mfa"))
   lp <- m$traces$lp_trace[,1]
-  lp_df <- ggmcmc::ggs(coda::mcmc.list(list(coda::mcmc(data.frame(lp))))) # I long for a simple life
+  lp_df <- 
+    ggmcmc::ggs(coda::mcmc.list(list(coda::mcmc(data.frame(lp))))) 
   
   ggmcmc::ggs_autocorrelation(lp_df)
 }
@@ -398,17 +456,32 @@ map_branch <- function(g) {
 }
 
 
-#' Summarise mfa fit
+#' Summarise an mfa fit
+#' 
+#' Returns summary statistics of an mfa fit, including MAP pseudotime and
+#' branch allocations along with uncertainties.
 #' 
 #' @param object An MFA fit returned by a call to \code{mfa}
 #' @param ... Additional arguments
 #' @export
 #' 
 #' @importFrom MCMCglmm posterior.mode
+#' 
+#' @return A \code{data_frame} with the following columns:
+#' \itemize{
+#' \item \code{pseudotime} The MAP pseudotime estimate
+#' \item \code{branch} The MAP branch estimate
+#' \item \code{branch_certainty} The proportion of traces for which the cell
+#' is assigned to its MAP branch
+#' \item \code{pseudotime_lower} The lower bound on the 95% highest-probability-density
+#' (HPD) credible interval
+#' \item \code{pseudotime_upper} The upper bound on the 95% HPD credible interval
+#' }
 summary.mfa <- function(object, ...) {
   
   ## Please someone fix R:
-  branch <- branch_certainty <- pseudotime_lower <- pseudotime_upper <- NULL
+  branch <- branch_certainty <- pseudotime_lower <- 
+    prop <- pseudotime <- pseudotime_upper <- NULL
   
   # map branching
   df <- map_branch(object$traces)
@@ -422,16 +495,23 @@ summary.mfa <- function(object, ...) {
   df$pseudotime_upper <- hpd_credint[,2]
   
   df <- dplyr::rename(df, branch = max, branch_certainty = prop)
-  df <- dplyr::select(df, pseudotime, branch, branch_certainty, pseudotime_lower, pseudotime_upper)
+  df <- dplyr::select(df, pseudotime, branch, branch_certainty, 
+                      pseudotime_lower, pseudotime_upper)
   return( df )
 }
 
-#' Calculate posterior precision parameters
+#' Calculate posterior chi precision parameters
+#' 
+#' Calculates a data frame of the MAP estimates of \eqn{\chi}.
 #' 
 #' @param m A fit returned from \code{mfa}
 #' 
 #' @export
 #' @importFrom MCMCglmm posterior.mode
+#' 
+#' @return A \code{data_frame} with one entry for the feature names and one
+#' for the MAP estimates of chi (using the \code{posterior.mode} function 
+#' from \code{MCMCglmm}).
 calculate_chi <- function(m) {
   chi_map <- posterior.mode(coda::mcmc(m$traces$chi_trace))
   return(
@@ -446,7 +526,11 @@ calculate_chi <- function(m) {
 #' 
 #' @export
 #' @import ggplot2
+#' 
+#' @return A \code{ggplot2} bar-plot showing the map
+#' estimates of \eqn{\chi^{-1}}
 plot_chi <- function(m, nfeatures = m$G) {
+  chi_map <- chi_map_inverse <- NULL # Make R CMD check happy
   chi <- calculate_chi(m)
   chi <- dplyr::mutate(chi, chi_map_inverse = 1 / chi_map)
   chi <- dplyr::arrange(chi, chi_map_inverse)
@@ -487,6 +571,7 @@ empirical_lambda <- function(y, lower_limit = 0) {
 #' @export
 #' @return A \code{ggplot2} plot showing the estimated dropout relationship
 plot_dropout_relationship <- function(y, lambda = empirical_lambda(y)) {
+  desc <- fit <- pdrop <- NULL
   ff <- function(x, lambda) exp(- lambda * x)
   d <- data_frame(mean = colMeans(y), pdrop = colMeans(y == 0)) %>% 
     dplyr::mutate(fit = ff(mean, lambda))
@@ -502,6 +587,8 @@ plot_dropout_relationship <- function(y, lambda = empirical_lambda(y)) {
 #' Sigmoid function for activations - renamed to avoid naming conflict
 #' 
 #' @keywords internal
+#' 
+#' @return Sigmoid function given the parameters
 cs_sigmoid <- function(t, phi, k, delta) {
   return( 2 * phi / (1 + exp(-k*(t - delta))))
 }
@@ -509,6 +596,7 @@ cs_sigmoid <- function(t, phi, k, delta) {
 #' Transient mean function
 #' 
 #' @keywords internal
+#' @return Transient mean function given the parameters.
 transient <- function(t, location = 0.5, scale = 0.01, reverse = FALSE) {
   y <- exp(- 1 / (2 * scale) * (t - location)^2)
   if(reverse) y <- 1 - y
@@ -517,7 +605,36 @@ transient <- function(t, location = 0.5, scale = 0.01, reverse = FALSE) {
 
 #' Create synthetic data
 #' 
+#' Create synthetic bifurcating data for two branches. Optionally incorporate zero
+#' inflation and transient gene expression.
+#' 
+#' @param C Number of cells to simulate
+#' @param G Number of genes to simulate
+#' @param p_transient Propotion of genes that exhibit transient expression
+#' @param zero_negative Logical: should expression generated less than zero
+#' be set to zero? This will zero-inflate the data
+#' @param model_dropout Logical: if true, expression will be set to zero with
+#' the exponential dropout formula dependent on the latent expression using
+#' dropout parameter \code{lambda}
+#' @param lambda The dropout parameter
+#' 
+#' @importFrom stats runif rbinom rlnorm
+#' 
+#' @examples 
+#' synth <- create_synthetic()
+#' 
 #' @export
+#' @return A list with the following entries:
+#' \itemize{
+#' \item \code{X} A cell-by-feature expression matrix
+#' \item \code{branch} A vector of length \code{C} assigning cells to branches
+#' \item \code{pst} A vector of pseudotimes for each cell
+#' \item \code{k} The \eqn{k} parameters
+#' \item \code{phi} The \eqn{\phi} parameters
+#' \item \code{delta} The \eqn{\delta} parameters
+#' \item \code{p_transient} The proportion of genes simulated as transient
+#' according to the original function call
+#' } 
 create_synthetic <- function(C = 100, G = 40, p_transient = 0,
                              zero_negative = TRUE, model_dropout = FALSE,
                              lambda = 1) {
@@ -583,7 +700,7 @@ create_synthetic <- function(C = 100, G = 40, p_transient = 0,
   if(length(transient_genes_common) > 0) {
     X[transient_genes_common,] <- t(sapply(transient_genes_common, function(g) {
       scale <- rlnorm(1, log(0.05), 0.5)
-      reverse <- sample(c(T,F), 1)
+      reverse <- sample(c(TRUE, FALSE), 1)
       mu <- 2 * phi[g, 1] * transient(pst, scale = scale, reverse = reverse)
       rnorm(length(mu), mu, gsd[g])
     }))
@@ -591,7 +708,8 @@ create_synthetic <- function(C = 100, G = 40, p_transient = 0,
   
   # Deal with bifurcating ones
   if(length(transient_genes_bifurcating) > 0) {
-    X[transient_genes_bifurcating,] <- t(sapply(transient_genes_bifurcating, function(g) {
+    X[transient_genes_bifurcating,] <- 
+      t(sapply(transient_genes_bifurcating, function(g) {
       which_nonzero <- which(k[g,] != 0) # we're going to make this one transient
       scale <- rlnorm(1, log(0.05), 0.3)
       reverse <- k[g, which_nonzero] < 0

@@ -9,6 +9,10 @@ to_ggmcmc(g)
 \arguments{
 \item{g}{A list of trace matrices}
 }
+\value{
+The trace list converted into a \code{ggs} object for 
+input to \code{ggmcmc}.
+}
 \description{
 Turn a trace list to a \code{ggmcmc} object
 }

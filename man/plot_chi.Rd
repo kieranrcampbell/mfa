@@ -11,6 +11,10 @@ plot_chi(m, nfeatures = m$G)
 
 \item{nfeatures}{Top number of}
 }
+\value{
+A \code{ggplot2} bar-plot showing the map
+estimates of \eqn{\chi^{-1}}
+}
 \description{
 Plot posterior precision parameters
 }

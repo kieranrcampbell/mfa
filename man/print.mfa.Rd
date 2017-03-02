@@ -11,6 +11,9 @@
 
 \item{...}{Additional arguments}
 }
+\value{
+A string representation of an \code{mfa} object.
+}
 \description{
 Print an mfa fit
 }

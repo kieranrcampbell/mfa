@@ -6,6 +6,9 @@
 \usage{
 transient(t, location = 0.5, scale = 0.01, reverse = FALSE)
 }
+\value{
+Transient mean function given the parameters.
+}
 \description{
 Transient mean function
 }

@@ -12,7 +12,7 @@ mfa(y, iter = 2000, thin = 1, burn = iter/2, b = 2,
   w_alpha = 1/b, clamp_pseudotimes = FALSE)
 }
 \arguments{
-\item{y}{A cell-by-gene single-cell expression matrix}
+\item{y}{A cell-by-gene single-cell expression matrix or an ExpressionSet object}
 
 \item{iter}{Number of MCMC iterations}
 
@@ -58,7 +58,8 @@ doesn't perform sampling. Should be FALSE except for diagnostics.}
 \value{
 An S3 structure with the following entries:
 \itemize{
-\item \code{traces} A list of iteration-by-dim trace matrices for several important variables
+\item \code{traces} A list of iteration-by-dim trace matrices for 
+several important variables
 \item \code{iter} Number of iterations
 \item \code{thin} Thinning applied
 \item \code{burn} Burn period at the start of MCMC

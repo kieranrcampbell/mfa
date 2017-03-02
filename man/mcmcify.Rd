@@ -11,7 +11,11 @@ mcmcify(m, name)
 
 \item{name}{The name of the parameter}
 }
+\value{
+The input with consistent naming.
+}
 \description{
 Turn a matrix's columns into informative names
 }
+\keyword{internal}
 

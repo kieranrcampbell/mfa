@@ -7,7 +7,41 @@
 create_synthetic(C = 100, G = 40, p_transient = 0, zero_negative = TRUE,
   model_dropout = FALSE, lambda = 1)
 }
+\arguments{
+\item{C}{Number of cells to simulate}
+
+\item{G}{Number of genes to simulate}
+
+\item{p_transient}{Propotion of genes that exhibit transient expression}
+
+\item{zero_negative}{Logical: should expression generated less than zero
+be set to zero? This will zero-inflate the data}
+
+\item{model_dropout}{Logical: if true, expression will be set to zero with
+the exponential dropout formula dependent on the latent expression using
+dropout parameter \code{lambda}}
+
+\item{lambda}{The dropout parameter}
+}
+\value{
+A list with the following entries:
+\itemize{
+\item \code{X} A cell-by-feature expression matrix
+\item \code{branch} A vector of length \code{C} assigning cells to branches
+\item \code{pst} A vector of pseudotimes for each cell
+\item \code{k} The \eqn{k} parameters
+\item \code{phi} The \eqn{\phi} parameters
+\item \code{delta} The \eqn{\delta} parameters
+\item \code{p_transient} The proportion of genes simulated as transient
+according to the original function call
+}
+}
 \description{
-Create synthetic data
+Create synthetic bifurcating data for two branches. Optionally incorporate zero
+inflation and transient gene expression.
+}
+\examples{
+synth <- create_synthetic()
+
 }
 

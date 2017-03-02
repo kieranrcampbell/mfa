@@ -9,7 +9,11 @@ plot_mfa_autocorr(m)
 \arguments{
 \item{m}{A fit returned from \code{mfa}}
 }
+\value{
+A \code{ggplot2} plot returned by the \code{ggmcmc} package plotting
+the autocorrelation of the posterior log-likelihood.
+}
 \description{
-Plot MFA autocorrelation
+Plots the autocorrelation of the posterior log-likelihood.
 }
 

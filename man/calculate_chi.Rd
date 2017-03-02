@@ -2,14 +2,19 @@
 % Please edit documentation in R/mfa.R
 \name{calculate_chi}
 \alias{calculate_chi}
-\title{Calculate posterior precision parameters}
+\title{Calculate posterior chi precision parameters}
 \usage{
 calculate_chi(m)
 }
 \arguments{
 \item{m}{A fit returned from \code{mfa}}
 }
+\value{
+A \code{data_frame} with one entry for the feature names and one
+for the MAP estimates of chi (using the \code{posterior.mode} function 
+from \code{MCMCglmm}).
+}
 \description{
-Calculate posterior precision parameters
+Calculates a data frame of the MAP estimates of \eqn{\chi}.
 }
 

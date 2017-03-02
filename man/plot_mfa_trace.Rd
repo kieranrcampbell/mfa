@@ -9,7 +9,11 @@ plot_mfa_trace(m)
 \arguments{
 \item{m}{A fit returned from \code{mfa}}
 }
+\value{
+A \code{ggplot2} plot plotting
+the trace of the posterior log-likelihood.
+}
 \description{
-Plot MFA trace
+Plots the trace of the posterior log-likelihood.
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/mfa.R
 \name{summary.mfa}
 \alias{summary.mfa}
-\title{Summarise mfa fit}
+\title{Summarise an mfa fit}
 \usage{
 \method{summary}{mfa}(object, ...)
 }
@@ -11,7 +11,20 @@
 
 \item{...}{Additional arguments}
 }
+\value{
+A \code{data_frame} with the following columns:
+\itemize{
+\item \code{pseudotime} The MAP pseudotime estimate
+\item \code{branch} The MAP branch estimate
+\item \code{branch_certainty} The proportion of traces for which the cell
+is assigned to its MAP branch
+\item \code{pseudotime_lower} The lower bound on the 95% highest-probability-density
+(HPD) credible interval
+\item \code{pseudotime_upper} The upper bound on the 95% HPD credible interval
+}
+}
 \description{
-Summarise mfa fit
+Returns summary statistics of an mfa fit, including MAP pseudotime and
+branch allocations along with uncertainties.
 }
 

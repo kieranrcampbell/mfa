@@ -12,7 +12,8 @@ bibliography: bibliography.bib
 
 ```{r use-libs, include = FALSE}
 library(mfa)
-library(tidyverse)
+library(ggplot2)
+library(dplyr)
 
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE, fig.width = 6, fig.height = 4,
                       warning = FALSE, message = FALSE)
@@ -112,18 +113,13 @@ A unique part of this model is that through an ARD-like prior structure on the l
 plot_chi(m)
 ```
 
-To extract these we can access the trace slot of the `m` object:
+To calculate the MAP values for chi we can call the `calculate_chi` function, which returns a `data_frame` with the feature names and values:
 
 ```{r posterior-mean-chi}
-posterior_mean_chi <- colMeans(m$traces$chi_trace)
+posterior_chi_df <- calculate_chi(m)
+head(posterior_chi_df)
 ```
 
-and we can sort this into a data frame if necessary:
-
-```{r sort-to-df}
-data_frame(feature = m[['feature_names']], chi = posterior_mean_chi) %>% 
-  head()
-```
 
 # Advanced usage
 
