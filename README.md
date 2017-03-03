@@ -5,7 +5,7 @@
 ### Installation
 
 ```r
-devtools::install_github("kieranrcampbell/mfa")
+devtools::install_github("kieranrcampbell/mfa", build_vignettes = TRUE)
 ```
 
 ### Usage
@@ -13,24 +13,20 @@ devtools::install_github("kieranrcampbell/mfa")
 For a cell-by-gene matrix of expression Y, MFA can be envoked via
 
 ```r
-m <- mfa(Y, # gene expression
-        iter = 2000, # MCMC iterations
-        thin = 1, # MCMC samples to thin
-        burn = iter / 2, # Number of MCMC samples to throw away
-        b = 2, # Number of branches to model
-        pc_initialise = 1, # Which principal component to initialise pseudotimes to
-        collapse = FALSE, # Collapsed Gibbs sampling of branch assignments
-        seed = 123L, # Random seed to set
-        eta_tilde = mean(Y) # Hyperparameter eta tilde
-        )
+m <- mfa(Y)
+```
+
+which will perform Gibbs sampling to infer pseudotimes, branch structure, and genes involved in the bifurcation.
+
+For full usage see the package vignette:
+
+```r
+vignette('introduction_to_mfa')
 ```
 
 ### Authors
 
 Kieran Campbell & Christopher Yau
 
-Wellcome Trust Centre for Human Genetics, University of Oxford
+University of Oxford
 
-### Artwork
-
-Upcoming...
