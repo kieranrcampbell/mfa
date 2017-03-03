@@ -27,6 +27,7 @@ LazyData: true
 RoxygenNote: 5.0.1
 biocViews: RNASeq, GeneExpression, Bayesian, SingleCell
 Suggests: knitr,
-    rmarkdown, BiocStyle
+    rmarkdown, BiocStyle,
+    testthat
 VignetteBuilder: knitr
 NeedsCompilation: yes

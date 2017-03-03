@@ -17,4 +17,9 @@ A \code{ggplot2} plot showing the estimated dropout relationship
 \description{
 Plot the dropout relationship
 }
+\examples{
+synth <- create_synthetic(C = 20, G = 5, zero_negative = TRUE, model_dropout = TRUE)
+lambda <- empirical_lambda(synth$X)
+plot_dropout_relationship(synth$X, lambda)
+}
 

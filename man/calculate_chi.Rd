@@ -17,4 +17,9 @@ from \code{MCMCglmm}).
 \description{
 Calculates a data frame of the MAP estimates of \eqn{\chi}.
 }
+\examples{
+synth <- create_synthetic(C = 20, G = 5)
+m <- mfa(synth$X)
+chi_map <- calculate_chi(m)
+}
 

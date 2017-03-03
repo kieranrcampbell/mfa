@@ -1,7 +1,7 @@
 ---
 title: "Introduction to MFA"
 author: "Kieran R Campbell"
-date: "`r Sys.Date()`"
+date: "2017-3-3"
 output: BiocStyle::html_document
 vignette: >
   %\VignetteIndexEntry{Vignette Title}

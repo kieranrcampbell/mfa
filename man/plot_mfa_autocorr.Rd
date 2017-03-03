@@ -16,4 +16,9 @@ the autocorrelation of the posterior log-likelihood.
 \description{
 Plots the autocorrelation of the posterior log-likelihood.
 }
+\examples{
+synth <- create_synthetic(C = 20, G = 5)
+m <- mfa(synth$X)
+plot_mfa_autocorr(m)
+}
 

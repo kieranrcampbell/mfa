@@ -27,4 +27,9 @@ is assigned to its MAP branch
 Returns summary statistics of an mfa fit, including MAP pseudotime and
 branch allocations along with uncertainties.
 }
+\examples{
+synth <- create_synthetic(C = 20, G = 5)
+m <- mfa(synth$X)
+ms <- summary(m)
+}
 

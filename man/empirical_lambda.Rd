@@ -17,4 +17,8 @@ The estimated lambda
 \description{
 Estimate the dropout parameter
 }
+\examples{
+synth <- create_synthetic(C = 20, G = 5, zero_negative = TRUE, model_dropout = TRUE)
+lambda <- empirical_lambda(synth$X)
+}
 

@@ -50,6 +50,8 @@ log_sum_exp <- function(x) log(sum(exp(x - max(x)))) + max(x)
 #' 
 #' @importFrom stats dgamma dnorm
 #' @return The posterior log-likelihood.
+#' 
+#' @keywords internal
 posterior <- function(y, c, k, pst, tau, gamma, theta, eta, chi, w, tau_c, r, alpha, beta,
                       theta_tilde, eta_tilde, tau_theta, tau_eta, alpha_chi, beta_chi,
                       zero_inflation = FALSE, lambda = NULL) {
@@ -180,6 +182,10 @@ to_ggmcmc <- function(g) {
 #' @importFrom stats prcomp nls coef sd lm rnorm rgamma
 #' @importFrom Biobase exprs
 #' @useDynLib mfa
+#' 
+#' @examples
+#' synth <- create_synthetic(C = 20, G = 5)
+#' m <- mfa(synth$X)
 mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
                 zero_inflation = FALSE,
                 pc_initialise = 1, prop_collapse = 0,
@@ -391,6 +397,11 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
 #' @export
 #' 
 #' @return A string representation of an \code{mfa} object.
+#' 
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5)
+#' m <- mfa(synth$X)
+#' print(m)
 print.mfa <- function(x, ...) {
   msg <- paste("MFA fit with\n",
                x$N, "cells and", x$G, "genes\n",
@@ -410,6 +421,10 @@ print.mfa <- function(x, ...) {
 #' 
 #' @return A \code{ggplot2} plot plotting
 #' the trace of the posterior log-likelihood.
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5)
+#' m <- mfa(synth$X)
+#' plot_mfa_trace(m)
 plot_mfa_trace <- function(m) {
   stopifnot(is(m, "mfa"))
   lp <- m$traces$lp_trace[,1]
@@ -430,6 +445,11 @@ plot_mfa_trace <- function(m) {
 #' 
 #' @return A \code{ggplot2} plot returned by the \code{ggmcmc} package plotting
 #' the autocorrelation of the posterior log-likelihood.
+#' 
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5)
+#' m <- mfa(synth$X)
+#' plot_mfa_autocorr(m)
 plot_mfa_autocorr <- function(m) {
   stopifnot(is(m, "mfa"))
   lp <- m$traces$lp_trace[,1]
@@ -439,7 +459,15 @@ plot_mfa_autocorr <- function(m) {
   ggmcmc::ggs_autocorrelation(lp_df)
 }
 
-
+#' Find the MAP branch and uncertainty
+#' 
+#' @param g The trace slot from an mfa fit
+#' @return A data frame with a column corresponding
+#' to the MAP branch and a further column corresponding
+#' to the proportion of samples assigned to that branch
+#' (a measure of uncertainty).
+#' 
+#' @keywords internal
 map_branch <- function(g) {
   gamma <- g$gamma_trace
   df <- apply(gamma, 2, function(gam) {
@@ -477,6 +505,11 @@ map_branch <- function(g) {
 #' (HPD) credible interval
 #' \item \code{pseudotime_upper} The upper bound on the 95% HPD credible interval
 #' }
+#' 
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5)
+#' m <- mfa(synth$X)
+#' ms <- summary(m)
 summary.mfa <- function(object, ...) {
   
   ## Please someone fix R:
@@ -512,6 +545,11 @@ summary.mfa <- function(object, ...) {
 #' @return A \code{data_frame} with one entry for the feature names and one
 #' for the MAP estimates of chi (using the \code{posterior.mode} function 
 #' from \code{MCMCglmm}).
+#' 
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5)
+#' m <- mfa(synth$X)
+#' chi_map <- calculate_chi(m)
 calculate_chi <- function(m) {
   chi_map <- posterior.mode(coda::mcmc(m$traces$chi_trace))
   return(
@@ -529,6 +567,11 @@ calculate_chi <- function(m) {
 #' 
 #' @return A \code{ggplot2} bar-plot showing the map
 #' estimates of \eqn{\chi^{-1}}
+#' 
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5)
+#' m <- mfa(synth$X)
+#' plot_chi(m)
 plot_chi <- function(m, nfeatures = m$G) {
   chi_map <- chi_map_inverse <- NULL # Make R CMD check happy
   chi <- calculate_chi(m)
@@ -551,6 +594,10 @@ plot_chi <- function(m, nfeatures = m$G) {
 #' 
 #' @export
 #' @return The estimated lambda
+#' 
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5, zero_negative = TRUE, model_dropout = TRUE)
+#' lambda <- empirical_lambda(synth$X)
 empirical_lambda <- function(y, lower_limit = 0) {
   means <- colMeans(y)
   pdrop <- colMeans(y == 0)
@@ -570,6 +617,11 @@ empirical_lambda <- function(y, lower_limit = 0) {
 #' 
 #' @export
 #' @return A \code{ggplot2} plot showing the estimated dropout relationship
+#' 
+#' @examples 
+#' synth <- create_synthetic(C = 20, G = 5, zero_negative = TRUE, model_dropout = TRUE)
+#' lambda <- empirical_lambda(synth$X)
+#' plot_dropout_relationship(synth$X, lambda)
 plot_dropout_relationship <- function(y, lambda = empirical_lambda(y)) {
   desc <- fit <- pdrop <- NULL
   ff <- function(x, lambda) exp(- lambda * x)

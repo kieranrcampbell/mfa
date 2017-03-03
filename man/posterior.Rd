@@ -59,4 +59,5 @@ The posterior log-likelihood.
 \description{
 Calculate the log-posterior during inference
 }
+\keyword{internal}
 

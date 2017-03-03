@@ -104,4 +104,8 @@ The collapsed Gibbs sampling option given by \code{collapse} involves marginalis
 If zero inflation is enabled using the \code{zero_inflation} parameter then scaling should 
 *not* be enabled.
 }
+\examples{
+synth <- create_synthetic(C = 20, G = 5)
+m <- mfa(synth$X)
+}
 
