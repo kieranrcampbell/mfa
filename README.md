@@ -2,6 +2,8 @@
 
 `mfa` is an R package implementing Gibbs sampling for a Bayesian hierarchichal mixture of factor analysers for inference of bifurcations in single-cell data.
 
+![](https://zenodo.org/badge/DOI/10.5281/zenodo.345981.svg)
+
 ### Installation
 
 ```r
