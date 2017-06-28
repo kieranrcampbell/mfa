@@ -13,4 +13,3 @@ Transient mean function given the parameters.
 Transient mean function
 }
 \keyword{internal}
-

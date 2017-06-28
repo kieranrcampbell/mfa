@@ -18,4 +18,3 @@ The input with consistent naming.
 Turn a matrix's columns into informative names
 }
 \keyword{internal}
-

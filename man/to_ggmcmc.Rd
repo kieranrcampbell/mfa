@@ -16,4 +16,3 @@ input to \code{ggmcmc}.
 \description{
 Turn a trace list to a \code{ggmcmc} object
 }
-

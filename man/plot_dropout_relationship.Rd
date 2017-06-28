@@ -22,4 +22,3 @@ synth <- create_synthetic(C = 20, G = 5, zero_negative = TRUE, model_dropout = T
 lambda <- empirical_lambda(synth$X)
 plot_dropout_relationship(synth$X, lambda)
 }
-

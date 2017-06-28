@@ -44,4 +44,3 @@ inflation and transient gene expression.
 synth <- create_synthetic()
 
 }
-

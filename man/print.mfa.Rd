@@ -22,4 +22,3 @@ synth <- create_synthetic(C = 20, G = 5)
 m <- mfa(synth$X)
 print(m)
 }
-

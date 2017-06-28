@@ -13,4 +13,3 @@ Sigmoid function given the parameters
 Sigmoid function for activations - renamed to avoid naming conflict
 }
 \keyword{internal}
-

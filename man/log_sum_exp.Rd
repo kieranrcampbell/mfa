@@ -16,4 +16,3 @@ Log sum of exponentials in a numerically stable manner.
 Log sum of exponentials
 }
 \keyword{internal}
-

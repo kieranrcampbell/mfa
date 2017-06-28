@@ -19,4 +19,3 @@ to the proportion of samples assigned to that branch
 Find the MAP branch and uncertainty
 }
 \keyword{internal}
-

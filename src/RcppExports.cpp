@@ -240,3 +240,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"mfa_log_d_norm", (DL_FUNC) &mfa_log_d_norm, 3},
+    {"mfa_log_sum_exp", (DL_FUNC) &mfa_log_sum_exp, 1},
+    {"mfa_r_bernoulli_mat", (DL_FUNC) &mfa_r_bernoulli_mat, 1},
+    {"mfa_calculate_nuk", (DL_FUNC) &mfa_calculate_nuk, 7},
+    {"mfa_calculate_lamk", (DL_FUNC) &mfa_calculate_lamk, 4},
+    {"mfa_sample_k", (DL_FUNC) &mfa_sample_k, 7},
+    {"mfa_calculate_nuc", (DL_FUNC) &mfa_calculate_nuc, 7},
+    {"mfa_calculate_lamc", (DL_FUNC) &mfa_calculate_lamc, 3},
+    {"mfa_sample_c", (DL_FUNC) &mfa_sample_c, 8},
+    {"mfa_pst_update_par", (DL_FUNC) &mfa_pst_update_par, 6},
+    {"mfa_sample_pst", (DL_FUNC) &mfa_sample_pst, 6},
+    {"mfa_tau_params", (DL_FUNC) &mfa_tau_params, 7},
+    {"mfa_sample_tau", (DL_FUNC) &mfa_sample_tau, 7},
+    {"mfa_calculate_pi", (DL_FUNC) &mfa_calculate_pi, 10},
+    {"mfa_sample_x", (DL_FUNC) &mfa_sample_x, 8},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_mfa(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}
