@@ -289,7 +289,7 @@ mfa <- function(y, iter = 2000, thin = 1, burn = iter / 2, b = 2,
   # If zero_inflated == TRUE then we gibbs sample x and keep y
   if(!zero_inflation) rm(y)
   
-  for(it in 1:iter) {
+  for(it in seq_len(iter)) {
     
     # Factor loading matrix sampling
     k_new <- sapply(seq_len(b), function(branch) {

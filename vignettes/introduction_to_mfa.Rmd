@@ -23,6 +23,28 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE, fig.width = 6, fig.height = 4,
 
 `mfa` is an R package for fitting a Bayesian mixture of factor analysers to infer developmental trajectories with bifurcations from single-cell gene expression data. It is able to jointly infer pseudotimes, branching, and genes differentially regulated across branches using a generative, Bayesian hierarchical model. Inference is performed using fast Gibbs sampling.
 
+# Installation
+
+`mfa` can be installed in one of two ways:
+
+## From Bioconductor
+
+```{r install-bioconductor, eval = FALSE}
+source("https://bioconductor.org/biocLite.R")
+biocLite("mfa")
+library(mfa)
+```
+
+## From Github
+
+This requires the `devtools` package to be installed first
+
+```{r install-github, eval = FALSE}
+install.packages("devtools") # If not already installed
+devtools::install_github("kieranrcampbell/mfa")
+library(mfa)
+```
+
 # An example on synthetic data
 
 ## Generating synthetic data

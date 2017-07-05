@@ -7,6 +7,15 @@
 
 ### Installation
 
+`mfa` may be installed either via Bioconductor (coming soon) or Github:
+
+#### Installation from Bioconductor
+```r
+source("https://bioconductor.org/biocLite.R")
+biocLite("mfa")
+```
+
+#### Installation from Github
 ```r
 devtools::install_github("kieranrcampbell/mfa", build_vignettes = TRUE)
 ```
