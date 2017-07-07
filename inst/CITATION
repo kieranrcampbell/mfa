@@ -1,0 +1,12 @@
+
+citEntry(
+    entry = "article",
+    author = "Kieran R Campbell and Christopher Yau",
+    title = "Probabilistic modeling of bifurcations in single-cell gene expression data using a Bayesian mixture of factor analyzers",
+    journal = "Wellcome open research",
+    year = "2017",
+    volume = "2",
+    url = "http://dx.doi.org/10.12688/wellcomeopenres.11087.1",
+    doi =  "10.12688/wellcomeopenres.11087.1",
+    textVersion = "Campbell, Kieran R., and Christopher Yau. Probabilistic modeling of bifurcations in single-cell gene expression data using a Bayesian mixture of factor analyzers. Wellcome open research 2 (2017)."
+)

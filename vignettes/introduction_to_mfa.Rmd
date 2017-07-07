@@ -1,0 +1,208 @@
+---
+title: "Introduction to MFA"
+author: "Kieran R Campbell"
+date: "2017-3-3"
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: bibliography.bib
+---
+
+```{r use-libs, include = FALSE}
+library(mfa)
+library(ggplot2)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, fig.width = 6, fig.height = 4,
+                      warning = FALSE, message = FALSE)
+```
+
+# Introduction
+
+`mfa` is an R package for fitting a Bayesian mixture of factor analysers to infer developmental trajectories with bifurcations from single-cell gene expression data. It is able to jointly infer pseudotimes, branching, and genes differentially regulated across branches using a generative, Bayesian hierarchical model. Inference is performed using fast Gibbs sampling.
+
+# Installation
+
+`mfa` can be installed in one of two ways:
+
+## From Bioconductor
+
+```{r install-bioconductor, eval = FALSE}
+source("https://bioconductor.org/biocLite.R")
+biocLite("mfa")
+library(mfa)
+```
+
+## From Github
+
+This requires the `devtools` package to be installed first
+
+```{r install-github, eval = FALSE}
+install.packages("devtools") # If not already installed
+devtools::install_github("kieranrcampbell/mfa")
+library(mfa)
+```
+
+# An example on synthetic data
+
+## Generating synthetic data
+
+We first create some synthetic data for 100 cells and 40 genes calling the `mfa` function `create_synthetic`. This returns a list with gene expression, pseudotime, branch allocation, and various parameter estimates:
+
+```{r synthetic}
+synth <- create_synthetic(C = 100, G = 40)
+print(str(synth))
+```
+
+We can then PCA and put into a tidy format:
+```{r to-tidy}
+df_synth <- as_data_frame(prcomp(synth$X)$x[,1:2]) %>% 
+  mutate(pseudotime = synth$pst,
+        branch = factor(synth$branch))
+```
+
+and have a look at a PCA representation, coloured by both pseudotime and branch allocation:
+
+```{r pca-rep}
+ggplot(df_synth, aes(x = PC1, y = PC2, color = pseudotime)) + geom_point()
+ggplot(df_synth, aes(x = PC1, y = PC2, color = branch)) + geom_point()
+```
+
+## Calling `mfa`
+
+The input to `mfa` is either an `ExpressionSet` (e.g. from using the package [Scater](http://bioconductor.org/packages/release/bioc/html/scater.html)) or a cell-by-gene expression matrix. If an `ExpressionSet` is provided then the values in the `exprs` slot are used for gene expression.
+
+We invoke `mfa` with a call to the `mfa(...)` function. Depending on the size of the dataset and number of MCMC iterations used, this may take some time:
+
+```{r run-mfa}
+m <- mfa(synth$X)
+print(m)
+```
+
+Particular care must be paid to the initialisation of the pseudotimes: by default they are initialised to the first principal component, though if the researcher suspects (based on plotting marker genes) that the trajectory corresponds to a different PC, this can be set using the `pc_initialise` argument.
+
+## MCMC diagnostics
+
+As in any MCMC analysis, basic care is needed to make sure the samples have converged to something resembling the stationary distribution (see e.g. @cowles1996markov for a full discussion).
+
+For a quick summary of these, `mfa` provides two functions: `plot_mfa_trace` and `plot_mfa_autocorr` for quick plotting of the trace and autocorrelation of the posterior log-likelihood:
+
+```{r diagnostics}
+plot_mfa_trace(m)
+plot_mfa_autocorr(m)
+```
+
+## Plotting results
+
+We can extract posterior mean estimates along with credible intervals using the `summary` function:
+
+```{r summary}
+ms <- summary(m)
+print(head(ms))
+```
+
+This has six entries:
+
+* `pseudotime` The MAP pseudotime estimate
+* `branch` The MAP branch estimate
+* `branch_certainty` The proportion of MCMC traces (after burn-in) for which the cell was assigned to the MAP branch
+* `pseudotime_lower` and `pseudotime_upper`: the lower and upper 95\% highest-probability-density posterior credible intervals
+
+We can compare the inferred pseudotimes to the true values:
+
+```{r compare-pst}
+qplot(synth$pst, ms$pseudotime, color = factor(synth$branch)) +
+  xlab('True pseudotime') + ylab('Inferred pseudotime') +
+  scale_color_discrete(name = 'True\nbranch')
+```
+
+And we can equivalently plot the PCA representation coloured by MAP branch:
+
+```{r pca-rep-with-branch}
+mutate(df_synth, inferred_branch = ms[['branch']]) %>% 
+  ggplot(aes(x = PC1, y = PC2, color = inferred_branch)) +
+  geom_point() +
+  scale_color_discrete(name = 'Inferred\nbranch')
+```
+
+## Finding genes that bifurcate
+
+A unique part of this model is that through an ARD-like prior structure on the loading matrices we can automatically infer which genes are involved in the bifurcation process. For a quick-and-dirty look we can use the `plot_chi` function, where larger values of inverse-chi imply the gene is associated with the bifurcation:
+
+```{r plot-chi}
+plot_chi(m)
+```
+
+To calculate the MAP values for chi we can call the `calculate_chi` function, which returns a `data_frame` with the feature names and values:
+
+```{r posterior-mean-chi}
+posterior_chi_df <- calculate_chi(m)
+head(posterior_chi_df)
+```
+
+
+# Advanced usage
+
+## The `mfa` class
+
+A call to `mfa(...)` returns an `mfa` object that contains all the information about the dataset and the MCMC inference performed. Note that it does _not_ contain a copy of the original data. We can see the structure by calling `str` on an `mfa` object:
+
+```{r str-mfa}
+str(m, max.level = 1)
+```
+
+This contains the following slots:
+
+* `traces` - the raw MCMC traces (discussed in following section)
+* `iter` - the number of MCMC iterations
+* `thin` - the thinning of the MCMC chain
+* `burn` - the number of MCMC iterations thrown away as burn-in
+* `b` - the number of branches modelled
+* `collapse` - whether collapsed Gibbs sampling was implemented
+* `N` - the number of cells
+* `G` - the number of features (e.g. genes)
+* `feature_names` - the names of the features (e.g. genes)
+* `cell_names` - the names of the cells
+
+
+## Accessing MCMC traces
+
+MCMC traces can be accessed through the `traces` slot of an `mfa` object. This gives a list with an element for each variable, along with the log-likelihood:
+
+```{r str-traces}
+print(names(m$traces))
+```
+
+For non-branch-specific variables this is simply a matrix. For example, for the variable $\tau$ is just an interation-by-gene matrix:
+
+```{r tau}
+str(m$traces$tau_trace)
+```
+
+We can easily get the posterior mean by calling `colMeans`. More fancy posterior density estimation can be perfomed using the `MCMCglmm` package, such as `posterior.mode(...)` for MAP estimation (though in practice this is often similar to posterior mean). We can estimate posterior intervals using the `HPDInterval(...)` function from the `coda` package (note that traces must be converted to `coda` objects before calling either of these).
+
+Some variables are branch dependent, meaning the traces returned are arrays (or _tensors_ in fashionable speak) that have dimension `iteration x gene x branch`. An example is the $k$ variable:
+
+```{r print-k}
+str(m$traces$k_trace)
+```
+
+To get posterior means (or modes, or intervals) we then need to use the `apply` function to iterate over the branches. To find the posterior means of `k`, we then call
+
+```{r posterior-mean-of-k}
+pmean_k <- apply(m$traces$k_trace, 3, colMeans)
+str(pmean_k)
+```
+
+This returns a gene-by-branch matrix of posterior estimates.
+
+# Technical
+
+
+```{r sess-info}
+sessionInfo()
+```
+
+# References
