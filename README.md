@@ -11,8 +11,14 @@
 
 #### Installation from Bioconductor
 ```r
+<<<<<<< HEAD
 source("https://bioconductor.org/biocLite.R")
 biocLite("mfa")
+=======
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("mfa")
+>>>>>>> upstream/master
 ```
 
 #### Installation from Github
