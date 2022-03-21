@@ -12,7 +12,7 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 double log_d_norm(double x, double mu, double sigma) {
-  double ldn = -0.5 * log(2 * PI);
+  double ldn = -0.5 * log(2 * 3.1415926535);
   ldn -= log(sigma) + 1 / (2 * sigma * sigma) * (x - mu) * (x - mu);
   return ldn;
 }
