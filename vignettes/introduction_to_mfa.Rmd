@@ -30,14 +30,10 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE, fig.width = 6, fig.height = 4,
 ## From Bioconductor
 
 ```{r install-bioconductor, eval = FALSE}
-<<<<<<< HEAD
-source("https://bioconductor.org/biocLite.R")
-biocLite("mfa")
-=======
+
 if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager")
 BiocManager::install("mfa")
->>>>>>> upstream/master
 library(mfa)
 ```
 
